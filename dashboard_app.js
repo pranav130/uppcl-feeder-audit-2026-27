@@ -390,33 +390,25 @@ function calculateMetrics() {
       }
     }
 
-    // ── PTW Filter & Rule Handling ──
-    const flags = r[13];
-    const isPtwFeeder = (flags & 16) !== 0;
-
-    // Mode 1: Default (PTW Excluded) -> Skip dedicated PTW feeders
-    if (!state.includePtw && isPtwFeeder) {
-      continue;
-    }
-
     totalScoped++;
 
+    const flags = r[13];
     if (state.excludeAbnormal && (flags & 1)) continue;
     if (state.excludeBilledGtInput && (flags & 2)) continue;
     if (state.excludeZeroInput && (flags & 4)) continue;
 
     let fIE = 0, fSE = 0, fAss = 0, fReal = 0;
-    let fPtwAss = 0;
 
     for (let m = validM0; m <= validM1; m++) {
       fIE += r[8][m];
       fSE += r[9][m];
-      fAss += r[10][m];
+      fAss += r[10][m]; // Assessment is CONSTANT in both modes
+
+      // Realization changes based on PTW:
+      // When Include PTW is checked: PTW Assessment = PTW Realization (crediting PTW Assessment to Realization)
       let mReal = r[11][m];
       if (state.includePtw && r[14] && r[14][m]) {
-        // PTW Assessment = PTW Realization rule (Excel Col 21 formula)
         mReal += r[14][m];
-        fPtwAss += r[14][m];
       }
       fReal += mReal;
     }
@@ -426,10 +418,10 @@ function calculateMetrics() {
     for (let m = 0; m < 5; m++) {
       monthly[m].ie += r[8][m];
       monthly[m].se += r[9][m];
-      monthly[m].ass += r[10][m];
+      monthly[m].ass += r[10][m]; // Assessment CONSTANT
       let mReal = r[11][m];
       if (state.includePtw && r[14] && r[14][m]) {
-        mReal += r[14][m];
+        mReal += r[14][m]; // Credit PTW assessment to Realization
       }
       monthly[m].real += mReal;
     }

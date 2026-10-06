@@ -1,5 +1,6 @@
 import re
 import sys
+import shutil
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -13,7 +14,9 @@ js_code = js_code.replace(
     "excludeZeroInput: false,\n  includePtw: false,"
 )
 
-# 2. Update calculateMetrics loop to handle PTW inclusion/exclusion and Assessment = Realization rule
+# 2. Update calculateMetrics loop:
+# Feeders and Assessment amount are CONSTANT across both modes (26,033 feeders, total assessment unchanged).
+# ONLY Realization (and derived Throughput Rate, Collection Eff, AT&C Loss) changes when PTW is included vs excluded!
 target_old_calc = """    totalScoped++;
 
     const flags = r[13];
@@ -26,33 +29,25 @@ target_old_calc = """    totalScoped++;
       fIE += r[8][m]; fSE += r[9][m]; fAss += r[10][m]; fReal += r[11][m];
     }"""
 
-replacement_calc = """    // ── PTW Filter & Rule Handling ──
+replacement_calc = """    totalScoped++;
+
     const flags = r[13];
-    const isPtwFeeder = (flags & 16) !== 0;
-
-    // Mode 1: Default (PTW Excluded) -> Skip dedicated PTW feeders
-    if (!state.includePtw && isPtwFeeder) {
-      continue;
-    }
-
-    totalScoped++;
-
     if (state.excludeAbnormal && (flags & 1)) continue;
     if (state.excludeBilledGtInput && (flags & 2)) continue;
     if (state.excludeZeroInput && (flags & 4)) continue;
 
     let fIE = 0, fSE = 0, fAss = 0, fReal = 0;
-    let fPtwAss = 0;
 
     for (let m = validM0; m <= validM1; m++) {
       fIE += r[8][m];
       fSE += r[9][m];
-      fAss += r[10][m];
+      fAss += r[10][m]; // Assessment is CONSTANT in both modes
+
+      // Realization changes based on PTW:
+      // When Include PTW is checked: PTW Assessment = PTW Realization (crediting PTW Assessment to Realization)
       let mReal = r[11][m];
       if (state.includePtw && r[14] && r[14][m]) {
-        // PTW Assessment = PTW Realization rule (Excel Col 21 formula)
         mReal += r[14][m];
-        fPtwAss += r[14][m];
       }
       fReal += mReal;
     }"""
@@ -90,10 +85,10 @@ old_monthly_loop = """    for (let m = 0; m < 5; m++) {
 new_monthly_loop = """    for (let m = 0; m < 5; m++) {
       monthly[m].ie += r[8][m];
       monthly[m].se += r[9][m];
-      monthly[m].ass += r[10][m];
+      monthly[m].ass += r[10][m]; // Assessment CONSTANT
       let mReal = r[11][m];
       if (state.includePtw && r[14] && r[14][m]) {
-        mReal += r[14][m];
+        mReal += r[14][m]; // Credit PTW assessment to Realization
       }
       monthly[m].real += mReal;
     }"""
@@ -171,8 +166,11 @@ if target_reset in js_code:
 else:
     print("ERROR: target_reset not found!")
 
-out_js_path = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\dashboard_app.js"
-with open(out_js_path, "w", encoding="utf-8") as f:
-    f.write(js_code)
+out_js_path1 = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\dashboard_app.js"
+out_js_path2 = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\dashboard_app.js"
 
-print(f"Wrote {out_js_path} ({len(js_code)} bytes)")
+with open(out_js_path1, "w", encoding="utf-8") as f:
+    f.write(js_code)
+shutil.copy2(out_js_path1, out_js_path2)
+
+print(f"Wrote {out_js_path1} and {out_js_path2} ({len(js_code)} bytes)")

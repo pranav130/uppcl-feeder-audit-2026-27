@@ -1,4 +1,5 @@
 import sys
+import shutil
 from bs4 import BeautifulSoup
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -7,18 +8,15 @@ ref_path = r"C:\Users\HP\.gemini\antigravity\brain\3a1f71b5-7420-451d-82f6-5187a
 with open(ref_path, "r", encoding="utf-8") as f:
     soup = BeautifulSoup(f.read(), 'html.parser')
 
-# Update title
 if soup.title:
     soup.title.string = "UPPCL 11KV Feeder Progressive Energy Audit Dashboard (FY 2026-27)"
 
-# Replace inline style with link to styles.css
 for s in soup.find_all('style'):
     s.decompose()
 
 link_css = soup.new_tag('link', rel='stylesheet', href='styles.css')
 soup.head.append(link_css)
 
-# Update H1 title
 h1 = soup.find('h1')
 if h1:
     h1.clear()
@@ -28,7 +26,6 @@ sub = soup.find('div', class_='sub')
 if sub:
     sub.string = "Uttar Pradesh Power Corporation Limited — Energy Audit Cell (April 2026 – August 2026)"
 
-# Add Status Bar right below header, before filters-container
 status_bar_html = """
 <div class="status-bar" id="statusBar">
   <div class="status-tags">
@@ -46,7 +43,6 @@ header = soup.find('header')
 if header:
     header.insert_after(status_soup)
 
-# Add PTW checkbox inside .leave-out-bar
 leave_out = soup.find('div', class_='leave-out-bar')
 if leave_out:
     ptw_checkbox_html = """
@@ -58,7 +54,6 @@ if leave_out:
     ptw_cb_soup = BeautifulSoup(ptw_checkbox_html, 'html.parser')
     leave_out.append(ptw_cb_soup)
 
-# Add Methodology Modal at end of body
 modal_html = """
 <div class="modal-overlay" id="methodologyModal">
   <div class="modal-content">
@@ -83,11 +78,16 @@ modal_html = """
         <li><code>Throughput Rate (₹/kWh) = (Progressive Realization &times; 100) / Progressive Input Energy</code></li>
       </ul>
 
-      <h4>3. PTW (Private Tube Well) Business Rule</h4>
+      <h4>3. PTW Rule & Assessment Invariance</h4>
       <p>A connection is treated as PTW when its <strong>Supply Type starts with "5"</strong> (LMV-5 Agriculture / Private Tube Well).</p>
       <ul>
-        <li><strong>Default State (PTW Excluded)</strong>: All dedicated PTW feeders (<code>Feeder Nature == 'AGRICULTURE'</code>, 4,106 feeders) are excluded from the dataset. Metrics and charts represent the 21,927 non-PTW feeders.</li>
-        <li><strong>Included State (PTW Included)</strong>: The full dataset of 26,033 feeders is evaluated. For PTW connections, the special rule <strong>PTW Assessment = PTW Realization</strong> is applied. Pure PTW feeders achieve 100% collection efficiency, and mixed feeders receive credit for PTW Assessment (<code>Realization = Base Realization + PTW Assessment</code>), matching the official Excel Col 21 formula.</li>
+        <li><strong>Assessment Amount is CONSTANT</strong>: The total assessed revenue (₹ 30,462.55 Cr), total feeders (26,033), input energy (68,168.95 MU), and sold energy (42,485.45 MU) remain completely unchanged whether PTW connections are included or excluded.</li>
+        <li><strong>Realization & Throughput Rate</strong>: Under the rule <strong>PTW Assessment = PTW Realization</strong>, only revenue realization and throughput rate change:
+          <ul>
+            <li><strong>PTW Excluded (Default)</strong>: Realization reflects cash collection without crediting PTW subsidy assessment (₹ 24,293.94 Cr; Throughput Rate: ₹ 3.56/kWh; CE: 79.75%; AT&C Loss: 50.30%).</li>
+            <li><strong>PTW Included</strong>: PTW Assessment (₹ 857.63 Cr) is credited as deemed revenue realization (Realization: ₹ 25,151.58 Cr; Throughput Rate: ₹ 3.69/kWh; CE: 82.57%; AT&C Loss: 48.54%), exactly matching the official Excel Col 21 formula.</li>
+          </ul>
+        </li>
       </ul>
 
       <h4>4. Loss Slabs & Abnormal Classifications</h4>
@@ -102,7 +102,6 @@ modal_html = """
 modal_soup = BeautifulSoup(modal_html, 'html.parser')
 soup.body.append(modal_soup)
 
-# Ensure scripts order: Chart.js, feeders.js, xlsx.full.min.js, dashboard_app.js
 for sc in soup.find_all('script'):
     sc.decompose()
 
@@ -111,8 +110,11 @@ soup.body.append(soup.new_tag('script', src="data/feeders.js"))
 soup.body.append(soup.new_tag('script', src="data/xlsx.full.min.js"))
 soup.body.append(soup.new_tag('script', src="dashboard_app.js"))
 
-out_html = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\index.html"
-with open(out_html, "w", encoding="utf-8") as f:
-    f.write(str(soup))
+out_html1 = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\index.html"
+out_html2 = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\index.html"
 
-print(f"Wrote {out_html} ({len(str(soup))} bytes)")
+with open(out_html1, "w", encoding="utf-8") as f:
+    f.write(str(soup))
+shutil.copy2(out_html1, out_html2)
+
+print(f"Wrote {out_html1} and {out_html2}")

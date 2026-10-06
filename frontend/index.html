@@ -480,11 +480,16 @@
 <li><code>Average Billing Rate (ABR ₹/kWh) = (Progressive Assessment × 100) / Progressive Sold Energy</code></li>
 <li><code>Throughput Rate (₹/kWh) = (Progressive Realization × 100) / Progressive Input Energy</code></li>
 </ul>
-<h4>3. PTW (Private Tube Well) Business Rule</h4>
+<h4>3. PTW Rule &amp; Assessment Invariance</h4>
 <p>A connection is treated as PTW when its <strong>Supply Type starts with "5"</strong> (LMV-5 Agriculture / Private Tube Well).</p>
 <ul>
-<li><strong>Default State (PTW Excluded)</strong>: All dedicated PTW feeders (<code>Feeder Nature == 'AGRICULTURE'</code>, 4,106 feeders) are excluded from the dataset. Metrics and charts represent the 21,927 non-PTW feeders.</li>
-<li><strong>Included State (PTW Included)</strong>: The full dataset of 26,033 feeders is evaluated. For PTW connections, the special rule <strong>PTW Assessment = PTW Realization</strong> is applied. Pure PTW feeders achieve 100% collection efficiency, and mixed feeders receive credit for PTW Assessment (<code>Realization = Base Realization + PTW Assessment</code>), matching the official Excel Col 21 formula.</li>
+<li><strong>Assessment Amount is CONSTANT</strong>: The total assessed revenue (₹ 30,462.55 Cr), total feeders (26,033), input energy (68,168.95 MU), and sold energy (42,485.45 MU) remain completely unchanged whether PTW connections are included or excluded.</li>
+<li><strong>Realization &amp; Throughput Rate</strong>: Under the rule <strong>PTW Assessment = PTW Realization</strong>, only revenue realization and throughput rate change:
+          <ul>
+<li><strong>PTW Excluded (Default)</strong>: Realization reflects cash collection without crediting PTW subsidy assessment (₹ 24,293.94 Cr; Throughput Rate: ₹ 3.56/kWh; CE: 79.75%; AT&amp;C Loss: 50.30%).</li>
+<li><strong>PTW Included</strong>: PTW Assessment (₹ 857.63 Cr) is credited as deemed revenue realization (Realization: ₹ 25,151.58 Cr; Throughput Rate: ₹ 3.69/kWh; CE: 82.57%; AT&amp;C Loss: 48.54%), exactly matching the official Excel Col 21 formula.</li>
+</ul>
+</li>
 </ul>
 <h4>4. Loss Slabs &amp; Abnormal Classifications</h4>
 <ul>

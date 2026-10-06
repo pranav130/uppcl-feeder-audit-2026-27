@@ -20,32 +20,28 @@ Based strictly on authoritative data up to August 2026 from:
 
 ---
 
-## 2. PTW (Private Tube Well) Business Rule & Modes
+## 2. PTW (Private Tube Well) Business Rule & Invariance
 
-### PTW Identification
-A connection is treated as PTW when its **Supply Type starts with `"5"`** (LMV-5 Agriculture / Private Tube Well connections).
+### Core Business Rule
+- **Assessment Invariance**: The **Assessment Amount (₹ 30,462.55 Cr)**, **Total Feeders (26,033)**, **Input Energy (68,168.95 MU)**, **Sold Energy (42,485.45 MU)**, and **Line Loss % (37.68%)** remain strictly **CONSTANT** irrespective of whether PTW connections are included or excluded.
+- **Dynamic Realization & Throughput Rate**: Under the business principle **PTW Assessment = PTW Realization**, only the **Revenue Realization**, **Throughput Rate (₹/kWh)**, **Collection Efficiency (%)**, and **AT&C Loss (%)** change upon including PTW connections:
+  - **PTW Excluded (Default)**: Normal / Base Realization collected without crediting PTW subsidy assessment (**₹ 24,293.94 Cr**; Throughput Rate: **₹ 3.56/kWh**; Collection Eff: **79.75%**; AT&C Loss: **50.30%**).
+  - **PTW Included**: PTW Assessment (**₹ 857.63 Cr**) is credited as realized revenue (**Realization = ₹ 25,151.58 Cr**; Throughput Rate increases to **₹ 3.69/kWh**; Collection Eff improves to **82.57%**; AT&C Loss drops to **48.54%**), exactly matching the official Excel Column 21 formula (`AT&C Loss_inc_PTW`).
 
-### Mode 1: Default Mode (PTW EXCLUDED)
-- **Checkbox**: `☐ Include PTW Connections (Supply Type starts with "5")` is **unchecked by default**.
-- **Dataset Scope**: Dedicated Agriculture/PTW feeders (`Feeder Nature == 'AGRICULTURE'`, 4,106 feeders) are excluded.
-- **Total Counted Feeders**: **21,927 Feeders**.
-- **Progressive Input Energy**: **63,665.95 MU**.
-- **Progressive Sold Energy**: **39,800.75 MU**.
-- **Progressive Assessment**: **₹ 29,835.27 Crore**.
-- **Progressive Realization**: **₹ 24,123.75 Crore**.
-- **Line Loss**: **37.48%**.
-
-### Mode 2: Included Mode (PTW INCLUDED)
-- **Checkbox**: `☑ Include PTW Connections (Supply Type starts with "5")` is **checked**.
-- **Dataset Scope**: Full dataset of **26,033 Feeders**.
-- **Special Business Rule**: **PTW Assessment = PTW Realization**.
-  - Revenue Realization is credited with PTW Assessment (`Realization = Base Realization + PTW Assessment`).
-  - Matches the authoritative Excel formula in Column 21 (`AT&C Loss_inc_PTW`).
-- **Progressive Input Energy**: **68,168.95 MU**.
-- **Progressive Sold Energy**: **42,485.44 MU**.
-- **Progressive Assessment**: **₹ 30,462.56 Crore**.
-- **Progressive Realization (with PTW)**: **₹ 25,151.58 Crore**.
-- **Line Loss**: **37.68%**.
+| Parameter | Mode 1: Default (`PTW EXCLUDED`) | Mode 2: Dynamic Toggle (`PTW INCLUDED`) | Impact |
+| :--- | :--- | :--- | :--- |
+| **PTW Checkbox** | `☐ Include PTW Connections` (Unchecked) | `☑ Include PTW Connections` (Checked) | Toggle Control |
+| **Status Badge** | `PTW Status: EXCLUDED` | `PTW Status: INCLUDED` | Visual Indicator |
+| **Total Feeders** | **26,033 Feeders** | **26,033 Feeders** | **CONSTANT** |
+| **Progressive Assessment** | **₹ 30,462.55 Crore** | **₹ 30,462.55 Crore** | **CONSTANT** |
+| **Progressive Input Energy** | **68,168.95 MU** | **68,168.95 MU** | **CONSTANT** |
+| **Progressive Sold Energy** | **42,485.45 MU** | **42,485.45 MU** | **CONSTANT** |
+| **Billing Efficiency** | **62.32%** | **62.32%** | **CONSTANT** |
+| **Line Loss %** | **37.68%** | **37.68%** | **CONSTANT** |
+| **Progressive Realization** | **₹ 24,293.94 Crore** | **₹ 25,151.58 Crore** | **+ ₹ 857.63 Cr Credited** |
+| **Throughput Rate** | **₹ 3.56 / kWh** | **₹ 3.69 / kWh** | **+ ₹ 0.13 / kWh** |
+| **Collection Efficiency** | **79.75%** | **82.57%** | **+ 2.82%** |
+| **AT&C Loss %** | **50.30%** | **48.54%** | **- 1.76% Reduction** |
 
 ---
 
@@ -91,25 +87,11 @@ A connection is treated as PTW when its **Supply Type starts with `"5"`** (LMV-5
 
 ## 4. Local Setup & Execution
 
-### Prerequisites
-- Python 3.9+ (optional, for local static HTTP server)
-- Modern web browser (Chrome, Edge, Firefox, Safari)
-
-### Run Locally
 ```bash
-# Navigate to the frontend directory
-cd frontend
+# Navigate to project directory
+cd C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27
 
 # Start a local static server
-python -m http.server 8000
+python -m http.server 8080
 ```
-Open [http://localhost:8000/](http://localhost:8000/) in your browser.
-
-Alternatively, double-click `frontend/index.html` directly—it works out-of-the-box thanks to offline dictionary encoding!
-
----
-
-## 5. Verification & Validation Status
-The project includes a full automated test suite (`validation/validate_calculations.py`) that reconciles every KPI against the original Excel workbook formulas:
-- **Test A (PTW Excluded)**: 100% Passed (Feeders: 21,927 | IE: 63,665.95 MU | SE: 39,800.75 MU | Assessment: 29,835.27 Cr | Realization: 24,123.75 Cr).
-- **Test B (PTW Included)**: 100% Passed (Feeders: 26,033 | IE: 68,168.95 MU | SE: 42,485.44 MU | Assessment: 30,462.56 Cr | Realization: 25,151.58 Cr).
+Open [http://localhost:8080/](http://localhost:8080/) in your browser.

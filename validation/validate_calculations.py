@@ -52,20 +52,17 @@ def run_dashboard_engine(include_ptw):
 
     for r in R:
         flags = r[13]
-        is_ptw_feeder = (flags & 16) != 0
-
-        if not include_ptw and is_ptw_feeder:
-            continue
 
         scoped += 1
         f_ie = sum(r[8])
         f_se = sum(r[9])
-        f_ass = sum(r[10])
+        f_ass = sum(r[10]) # Assessment is CONSTANT
         f_real = sum(r[11])
         f_ptw_ass = sum(r[14]) if r[14] else 0.0
 
         if include_ptw and f_ptw_ass > 0:
-            f_real += f_ptw_ass # Credit PTW Assessment to Realization
+            # PTW Assessment = PTW Realization rule
+            f_real += f_ptw_ass
 
         tot_ie += f_ie
         tot_se += f_se
@@ -96,6 +93,7 @@ def run_dashboard_engine(include_ptw):
     ce_ov = (tot_real / tot_ass * 100.0) if tot_ass > 0 else (100.0 if tot_real > 0 else 0.0)
     ll_ov = 100.0 - be_ov
     atc_ov = 100.0 - (be_ov * ce_ov / 100.0)
+    thru_rate = (tot_real * 100.0 / tot_ie) if tot_ie > 0 else 0.0
 
     return {
         'totalFeeders': scoped,
@@ -103,6 +101,7 @@ def run_dashboard_engine(include_ptw):
         'soldEnergyMu': tot_se / 1000.0,
         'assessmentCr': tot_ass / 100.0,
         'realizationCr': tot_real / 100.0,
+        'thruRate': thru_rate,
         'billingEff': be_ov,
         'collectionEff': ce_ov,
         'lineLoss': ll_ov,
@@ -122,26 +121,16 @@ wb = openpyxl.load_workbook(excel_path, read_only=True, data_only=True)
 sheet = wb['AUDIT DATA']
 
 raw_total_feeders = 0
-raw_agri_feeders = 0
 raw_ie_all = 0.0
 raw_se_all = 0.0
 raw_ass_all = 0.0
 raw_real_all = 0.0
 raw_ptw_ca_all = 0.0
 
-raw_ie_non_agri = 0.0
-raw_se_non_agri = 0.0
-raw_ass_non_agri = 0.0
-raw_real_non_agri = 0.0
-
 for idx, r in enumerate(sheet.iter_rows(values_only=True)):
     if idx < 2: continue
     if r[0] is None and r[5] is None: continue
     raw_total_feeders += 1
-
-    nature = str(r[7] or '').strip().upper()
-    is_agri = (nature == 'AGRICULTURE')
-    if is_agri: raw_agri_feeders += 1
 
     try: ie = float(r[8] or 0)
     except: ie = 0.0
@@ -160,12 +149,6 @@ for idx, r in enumerate(sheet.iter_rows(values_only=True)):
     raw_real_all += real
     raw_ptw_ca_all += ptw_ca
 
-    if not is_agri:
-        raw_ie_non_agri += ie
-        raw_se_non_agri += se
-        raw_ass_non_agri += ass
-        raw_real_non_agri += real
-
 wb.close()
 
 print("\n" + "="*80)
@@ -182,46 +165,48 @@ def check(label, actual, expected, tol=0.01, unit=""):
 tests_passed = True
 
 print("\n--- TEST A: Mode 1 (PTW EXCLUDED - DEFAULT) ---")
-tests_passed &= check("Total Feeders", res_mode1['totalFeeders'], raw_total_feeders - raw_agri_feeders, tol=0)
-tests_passed &= check("Input Energy (MU)", res_mode1['inputEnergyMu'], raw_ie_non_agri / 1000.0, tol=0.5, unit="MU")
-tests_passed &= check("Sold Energy (MU)", res_mode1['soldEnergyMu'], raw_se_non_agri / 1000.0, tol=0.5, unit="MU")
-tests_passed &= check("Assessment (Cr)", res_mode1['assessmentCr'], raw_ass_non_agri / 100.0, tol=0.5, unit="Cr")
-tests_passed &= check("Realization (Cr)", res_mode1['realizationCr'], raw_real_non_agri / 100.0, tol=0.5, unit="Cr")
-tests_passed &= check("Line Loss (%)", res_mode1['lineLoss'], 100.0 - (raw_se_non_agri / raw_ie_non_agri * 100.0), tol=0.02, unit="%")
+tests_passed &= check("Total Feeders (Constant)", res_mode1['totalFeeders'], raw_total_feeders, tol=0)
+tests_passed &= check("Input Energy (MU)", res_mode1['inputEnergyMu'], raw_ie_all / 1000.0, tol=0.5, unit="MU")
+tests_passed &= check("Sold Energy (MU)", res_mode1['soldEnergyMu'], raw_se_all / 1000.0, tol=0.5, unit="MU")
+tests_passed &= check("Assessment (Cr) (Constant)", res_mode1['assessmentCr'], raw_ass_all / 100.0, tol=0.5, unit="Cr")
+tests_passed &= check("Realization (Cr)", res_mode1['realizationCr'], raw_real_all / 100.0, tol=0.5, unit="Cr")
+tests_passed &= check("Line Loss (%)", res_mode1['lineLoss'], 100.0 - (raw_se_all / raw_ie_all * 100.0), tol=0.02, unit="%")
+tests_passed &= check("Throughput Rate (₹/kWh)", res_mode1['thruRate'], (raw_real_all * 100.0 / raw_ie_all), tol=0.02, unit="₹/k")
 
 print("\n--- TEST B: Mode 2 (PTW INCLUDED) ---")
 expected_real_mode2 = (raw_real_all + raw_ptw_ca_all) / 100.0
-tests_passed &= check("Total Feeders", res_mode2['totalFeeders'], raw_total_feeders, tol=0)
-tests_passed &= check("Input Energy (MU)", res_mode2['inputEnergyMu'], raw_ie_all / 1000.0, tol=0.5, unit="MU")
-tests_passed &= check("Sold Energy (MU)", res_mode2['soldEnergyMu'], raw_se_all / 1000.0, tol=0.5, unit="MU")
-tests_passed &= check("Assessment (Cr)", res_mode2['assessmentCr'], raw_ass_all / 100.0, tol=0.5, unit="Cr")
-tests_passed &= check("Realization with PTW (Cr)", res_mode2['realizationCr'], expected_real_mode2, tol=0.5, unit="Cr")
-tests_passed &= check("Line Loss (%)", res_mode2['lineLoss'], 100.0 - (raw_se_all / raw_ie_all * 100.0), tol=0.02, unit="%")
+expected_thru_mode2 = (raw_real_all + raw_ptw_ca_all) * 100.0 / raw_ie_all
 
-print("\n--- TEST C: Slabs Breakdown ---")
-print(f"Mode 1 Line Slabs: {res_mode1['lineSlabs']}")
-print(f"Mode 2 Line Slabs: {res_mode2['lineSlabs']}")
-print(f"Mode 1 AT&C Slabs: {res_mode1['atcSlabs']}")
-print(f"Mode 2 AT&C Slabs: {res_mode2['atcSlabs']}")
+tests_passed &= check("Total Feeders (Constant)", res_mode2['totalFeeders'], raw_total_feeders, tol=0)
+tests_passed &= check("Input Energy (MU) (Constant)", res_mode2['inputEnergyMu'], raw_ie_all / 1000.0, tol=0.5, unit="MU")
+tests_passed &= check("Sold Energy (MU) (Constant)", res_mode2['soldEnergyMu'], raw_se_all / 1000.0, tol=0.5, unit="MU")
+tests_passed &= check("Assessment (Cr) (Constant)", res_mode2['assessmentCr'], raw_ass_all / 100.0, tol=0.5, unit="Cr")
+tests_passed &= check("Realization with PTW (Cr)", res_mode2['realizationCr'], expected_real_mode2, tol=0.5, unit="Cr")
+tests_passed &= check("Line Loss (%) (Constant)", res_mode2['lineLoss'], 100.0 - (raw_se_all / raw_ie_all * 100.0), tol=0.02, unit="%")
+tests_passed &= check("Throughput Rate (₹/kWh)", res_mode2['thruRate'], expected_thru_mode2, tol=0.02, unit="₹/k")
+
+print("\n--- TEST C: Assessment & Energy Invariance ---")
+tests_passed &= check("Assessment Invariance", res_mode1['assessmentCr'], res_mode2['assessmentCr'], tol=0.0001, unit="Cr")
+tests_passed &= check("Input Energy Invariance", res_mode1['inputEnergyMu'], res_mode2['inputEnergyMu'], tol=0.0001, unit="MU")
+tests_passed &= check("Sold Energy Invariance", res_mode1['soldEnergyMu'], res_mode2['soldEnergyMu'], tol=0.0001, unit="MU")
+tests_passed &= check("Feeder Count Invariance", res_mode1['totalFeeders'], res_mode2['totalFeeders'], tol=0.0001)
+
+print("\n--- TEST D: Dynamic Change Verification ---")
+print(f"Realization Change: {res_mode1['realizationCr']:.2f} Cr -> {res_mode2['realizationCr']:.2f} Cr (Delta: +{res_mode2['realizationCr'] - res_mode1['realizationCr']:.2f} Cr)")
+print(f"Throughput Rate Change: {res_mode1['thruRate']:.2f} ₹/kWh -> {res_mode2['thruRate']:.2f} ₹/kWh (Delta: +{res_mode2['thruRate'] - res_mode1['thruRate']:.2f} ₹/kWh)")
+print(f"Collection Efficiency Change: {res_mode1['collectionEff']:.2f}% -> {res_mode2['collectionEff']:.2f}% (Delta: +{res_mode2['collectionEff'] - res_mode1['collectionEff']:.2f}%)")
+print(f"AT&C Loss % Change: {res_mode1['atcLoss']:.2f}% -> {res_mode2['atcLoss']:.2f}% (Delta: {res_mode2['atcLoss'] - res_mode1['atcLoss']:.2f}%)")
 
 # Save report
 report_data = {
     'status': 'ALL TESTS PASSED' if tests_passed else 'SOME TESTS FAILED',
     'mode1_ptw_excluded': res_mode1,
     'mode2_ptw_included': res_mode2,
-    'raw_excel_benchmarks': {
-        'totalFeeders': raw_total_feeders,
-        'agriFeeders': raw_agri_feeders,
-        'nonAgriFeeders': raw_total_feeders - raw_agri_feeders,
-        'inputEnergyMuAll': raw_ie_all / 1000.0,
-        'soldEnergyMuAll': raw_se_all / 1000.0,
-        'assessmentCrAll': raw_ass_all / 100.0,
-        'realizationCrAll': raw_real_all / 100.0,
-        'realizationCrWithPtw': expected_real_mode2,
-        'inputEnergyMuNonAgri': raw_ie_non_agri / 1000.0,
-        'soldEnergyMuNonAgri': raw_se_non_agri / 1000.0,
-        'assessmentCrNonAgri': raw_ass_non_agri / 100.0,
-        'realizationCrNonAgri': raw_real_non_agri / 100.0
+    'invariance_verified': {
+        'assessment_constant': res_mode1['assessmentCr'] == res_mode2['assessmentCr'],
+        'input_energy_constant': res_mode1['inputEnergyMu'] == res_mode2['inputEnergyMu'],
+        'sold_energy_constant': res_mode1['soldEnergyMu'] == res_mode2['soldEnergyMu'],
+        'total_feeders_constant': res_mode1['totalFeeders'] == res_mode2['totalFeeders']
     }
 }
 report_path = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\validation\validation_report.json"
