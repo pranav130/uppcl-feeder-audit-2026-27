@@ -7,26 +7,39 @@
 <title>UPPCL 11KV Feeder Progressive Energy Audit Dashboard (FY 2026-27)</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-
-
-<link href="styles.css" rel="stylesheet"/></head>
+<script>
+/* ── Auth Guard: Redirect unauthenticated sessions to login page ── */
+(function() {
+  try {
+    const token = sessionStorage.getItem('uppcl_auth_token');
+    if (!token || token !== btoa('UPPCL_AUTHENTICATED')) {
+      window.location.replace('login.html');
+    }
+  } catch (e) {
+    window.location.replace('login.html');
+  }
+})();
+</script>
+<link href="styles.css" rel="stylesheet"/>
+</head>
 <body>
 <div class="wrap">
 <!-- ── HEADER ── -->
 <header>
 <div>
-<h1>⚡ UPPCL 11KV Feeder PSR Dashboard · Progressive Energy Audit (FY 2026-27)</h1>
+<h1>⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
 <p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto August 2026</p>
 </div>
 <div class="header-actions">
-<span class="db-badge" id="dbBadge">● Connected (energy_db)</span>
-<a class="btn" href="feeder_drilldown.html" target="_blank" title="Open full 25,837 individual feeder table with 24 columns">
+<span class="db-badge" id="dbBadge">• Synced with PostgreSQL (energy_db)</span>
+<a class="btn" href="feeder_drilldown.html" target="_blank" title="Open full 26,033 individual feeder table with 24 columns">
         🔍 Feeder Drilldown Explorer
       </a>
 <button class="btn btn-primary" id="btnSummaryCsv" title="Export Executive Summary to CSV" type="button">
         ⬇ Export CSV
       </button>
 <button class="btn btn-theme" id="themeToggle" title="Toggle dark/light mode" type="button">🌙</button>
+<button class="btn" id="btnSignOut" type="button" title="Sign out of dashboard" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">🔒 Sign Out</button>
 </div>
 </header>
 <div class="status-bar" id="statusBar">
@@ -130,14 +143,14 @@
 <input id="chkZeroInput" type="checkbox"/> A Month with Zero Input
       </label>
 
-<label class="checkbox-group" title="Include PTW Connections (Supply Type starts with 5)">
+<label class="checkbox-group" title="Include PTW Connections">
 <input id="chkIncludePtw" type="checkbox"/>
-<span>Include PTW Connections (Supply Type starts with "5")</span>
+<span>Include PTW Connections</span>
 </label>
 </div>
 </section>
 <div class="chips" id="chipRow"></div>
-<!-- ── 12 HEADLINE KPI CARDS (2 rows of 6) ── -->
+<!-- ── HEADLINE KPI CARDS ── -->
 <section aria-label="Headline KPIs">
 <!-- Row 1 -->
 <div class="kpis">
@@ -173,7 +186,7 @@
 </div>
 </div>
 <!-- Row 2 -->
-<div class="kpis" style="margin-top: 10px;">
+<div class="kpis kpis-5" style="margin-top: 10px;">
 <div class="kpi" style="--kpi-col: var(--accent)">
 <span class="lab">Average Billing Rate</span>
 <span class="v" id="kpiABR">—</span>
@@ -198,11 +211,6 @@
 <span class="lab">Amount Realised</span>
 <span class="v" id="kpiReal">—</span>
 <span class="u">₹ Crore</span>
-</div>
-<div class="kpi" style="--kpi-col: var(--crit)">
-<span class="lab">AT&amp;C Loss Value</span>
-<span class="v" id="kpiALV" style="color:var(--crit)">—</span>
-<span class="u">₹ Crore (Value of Loss)</span>
 </div>
 </div>
 <!-- Baseline Network Sub-strip -->

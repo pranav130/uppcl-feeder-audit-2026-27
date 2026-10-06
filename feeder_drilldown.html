@@ -6,6 +6,19 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Feeder Audit Data Drilldown · UPPCL FY 2026-27</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+/* ── Auth Guard: Redirect unauthenticated sessions to login page ── */
+(function() {
+  try {
+    const token = sessionStorage.getItem('uppcl_auth_token');
+    if (!token || token !== btoa('UPPCL_AUTHENTICATED')) {
+      window.location.replace('login.html');
+    }
+  } catch (e) {
+    window.location.replace('login.html');
+  }
+})();
+</script>
 <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background: #f4f6f9; color: #212529; padding: 18px 22px; }

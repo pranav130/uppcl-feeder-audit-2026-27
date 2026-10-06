@@ -19,10 +19,10 @@ function updatePtwBadge(isIncluded) {
    - Works flawlessly both on Live DB (localhost) and GitHub Pages
    ═══════════════════════════════════════════════════════════════ */
 
-// ── Theme Management ──
+// ── Theme Management & Sign Out ──
 (function() {
   const toggleBtn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const saved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', saved);
   if (toggleBtn) toggleBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
 
@@ -31,9 +31,18 @@ function updatePtwBadge(isIncluded) {
       const cur = document.documentElement.getAttribute('data-theme') || 'light';
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('uppcl_theme', next);
       localStorage.setItem('theme', next);
       toggleBtn.textContent = next === 'dark' ? '☀️' : '🌙';
       updateAllChartThemes();
+    });
+  }
+
+  const btnSignOut = document.getElementById('btnSignOut');
+  if (btnSignOut) {
+    btnSignOut.addEventListener('click', () => {
+      sessionStorage.removeItem('uppcl_auth_token');
+      window.location.replace('login.html');
     });
   }
 })();
@@ -630,7 +639,8 @@ function renderKpis(d) {
   document.getElementById('kpiLossPerUnit').textContent = fmt(d.lossPerUnit, 2);
   document.getElementById('kpiAss').textContent = fmt(d.assessmentCr);
   document.getElementById('kpiReal').textContent = fmt(d.realizationCr);
-  document.getElementById('kpiALV').textContent = fmt(d.atcLossValueCr);
+  const elALV = document.getElementById('kpiALV');
+  if (elALV) elALV.textContent = fmt(d.atcLossValueCr);
 
   document.getElementById('cntTotal').textContent = fmt(d.totalFeeders);
   document.getElementById('cntAudited').textContent = fmt(d.auditedFeeders);
