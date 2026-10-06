@@ -75,6 +75,7 @@ const state = {
   hBarType: 'atc',
   ftBarGroup: 'feederType'
 };
+window.state = state;
 
 const MON_LABELS = ['Apr', 'May', 'Jun', 'Jul', 'Aug'];
 const MON_FULL   = ['April', 'May', 'June', 'July', 'August'];
@@ -1105,6 +1106,7 @@ function onFilterChanged() {
   renderTop150Table(computedResult.top150);
   renderProgressiveSummaryTable(computedResult.progressiveSummary);
 }
+window.onFilterChanged = onFilterChanged;
 
 // ── Event Listeners ──
 
@@ -1261,7 +1263,7 @@ document.querySelectorAll('[data-ft-toggle]').forEach(btn => {
 });
 
 // Reset Button
-window.resetFilters = function() {
+function resetFilters() {
   state.discom = '';
   state.zone = '';
   state.circle = '';
@@ -1317,9 +1319,11 @@ window.resetFilters = function() {
 
   syncCascadeDropdowns();
   onFilterChanged();
-};
+}
+window.resetFilters = resetFilters;
 
-document.getElementById('btnReset').addEventListener('click', resetFilters);
+const btnReset = document.getElementById('btnReset');
+if (btnReset) btnReset.addEventListener('click', resetFilters);
 
 // ── 1. Summary Table Sorting (#summaryTbl) ──
 document.querySelectorAll('#summaryTbl th[data-col]').forEach(th => {
