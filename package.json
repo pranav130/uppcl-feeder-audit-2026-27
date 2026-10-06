@@ -1,0 +1,21 @@
+{
+  "name": "uppcl-11kv-psr-dashboard-2026-27",
+  "version": "2.0.0",
+  "description": "UPPCL 11KV Feeder Progressive Energy Audit Dashboard (FY 2026-27)",
+  "scripts": {
+    "preprocess": "python scripts/preprocess_audit_data.py",
+    "slabs": "python scripts/generate_slab_exports.py",
+    "validate": "python validation/validate_calculations.py",
+    "serve": "python -m http.server 8080 --directory frontend"
+  },
+  "keywords": [
+    "uppcl",
+    "energy-audit",
+    "dashboard",
+    "psr",
+    "ptw",
+    "11kv-feeders"
+  ],
+  "author": "UPPCL Energy Audit Cell",
+  "license": "UNLICENSED"
+}
