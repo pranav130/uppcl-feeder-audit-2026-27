@@ -7,26 +7,42 @@
 <title>UPPCL 11KV Feeder Progressive Energy Audit Dashboard (FY 2026-27)</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-
-
-<link href="styles.css" rel="stylesheet"/></head>
+<script>
+/* ── Auth Guard: Redirect unauthenticated sessions to login page ── */
+(function() {
+  try {
+    const token = sessionStorage.getItem('uppcl_auth_token') || localStorage.getItem('uppcl_auth_token');
+    if (!token || token !== btoa('UPPCL_AUTHENTICATED')) {
+      window.location.replace('login.html');
+    } else {
+      sessionStorage.setItem('uppcl_auth_token', token);
+      localStorage.setItem('uppcl_auth_token', token);
+    }
+  } catch (e) {
+    window.location.replace('login.html');
+  }
+})();
+</script>
+<link href="styles.css" rel="stylesheet"/>
+</head>
 <body>
 <div class="wrap">
 <!-- ── HEADER ── -->
 <header>
 <div>
-<h1>⚡ UPPCL 11KV Feeder PSR Dashboard · Progressive Energy Audit (FY 2026-27)</h1>
+<h1>⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
 <p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto August 2026</p>
 </div>
 <div class="header-actions">
-<span class="db-badge" id="dbBadge">● Connected (energy_db)</span>
-<a class="btn" href="feeder_drilldown.html" target="_blank" title="Open full 25,837 individual feeder table with 24 columns">
+<span class="db-badge" id="dbBadge">• Synced with PostgreSQL (energy_db)</span>
+<a class="btn" href="feeder_drilldown.html" target="_blank" title="Open full 26,033 individual feeder table with 24 columns">
         🔍 Feeder Drilldown Explorer
       </a>
 <button class="btn btn-primary" id="btnSummaryCsv" title="Export Executive Summary to CSV" type="button">
         ⬇ Export CSV
       </button>
 <button class="btn btn-theme" id="themeToggle" title="Toggle dark/light mode" type="button">🌙</button>
+<button class="btn" id="btnSignOut" type="button" title="Sign out of dashboard" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">🔒 Sign Out</button>
 </div>
 </header>
 <div class="status-bar" id="statusBar">
@@ -130,14 +146,14 @@
 <input id="chkZeroInput" type="checkbox"/> A Month with Zero Input
       </label>
 
-<label class="checkbox-group" title="Include PTW Connections (Supply Type starts with 5)">
+<label class="checkbox-group" title="Include PTW Connections">
 <input id="chkIncludePtw" type="checkbox"/>
-<span>Include PTW Connections (Supply Type starts with "5")</span>
+<span>Include PTW Connections</span>
 </label>
 </div>
 </section>
 <div class="chips" id="chipRow"></div>
-<!-- ── 12 HEADLINE KPI CARDS (2 rows of 6) ── -->
+<!-- ── HEADLINE KPI CARDS ── -->
 <section aria-label="Headline KPIs">
 <!-- Row 1 -->
 <div class="kpis">
@@ -173,7 +189,7 @@
 </div>
 </div>
 <!-- Row 2 -->
-<div class="kpis" style="margin-top: 10px;">
+<div class="kpis kpis-5" style="margin-top: 10px;">
 <div class="kpi" style="--kpi-col: var(--accent)">
 <span class="lab">Average Billing Rate</span>
 <span class="v" id="kpiABR">—</span>
@@ -198,11 +214,6 @@
 <span class="lab">Amount Realised</span>
 <span class="v" id="kpiReal">—</span>
 <span class="u">₹ Crore</span>
-</div>
-<div class="kpi" style="--kpi-col: var(--crit)">
-<span class="lab">AT&amp;C Loss Value</span>
-<span class="v" id="kpiALV" style="color:var(--crit)">—</span>
-<span class="u">₹ Crore (Value of Loss)</span>
 </div>
 </div>
 <!-- Baseline Network Sub-strip -->
@@ -269,6 +280,37 @@
 <tbody id="byDiscomBody">
 <tr><td colspan="11" style="text-align:center;padding:16px;color:var(--ink-3)">Loading Discom summary...</td></tr>
 </tbody>
+</table>
+</div>
+</section>
+<!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE ── -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📊 Category-wise Performance Summary</h2>
+<p class="hint">Tariff Category-wise breakdown from clean.supply_type_category showing Consumers, Billed Energy, Assessment, Realization, ABR &amp; Collection Efficiency</p>
+</div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+<button class="btn" id="btnExportCategoryCsv" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Export Category Summary to CSV" type="button">⬇ Export CSV</button>
+</div>
+</div>
+<div class="tw">
+<table id="tblByCategory">
+<thead>
+<tr>
+<th class="tx" data-ccol="category">Category <span class="sort-ico">↕</span></th>
+<th class="sorted" data-ccol="consumers">No. of Consumers <span class="sort-ico">▼</span></th>
+<th data-ccol="billedMu">Billed Energy (MU) <span class="sort-ico">↕</span></th>
+<th data-ccol="assessmentCr">Assessment (₹ Cr) <span class="sort-ico">↕</span></th>
+<th data-ccol="realisedCr">Realised Amount (₹ Cr) <span class="sort-ico">↕</span></th>
+<th data-ccol="abr">Average Billing Rate (₹/kWh) <span class="sort-ico">↕</span></th>
+<th data-ccol="collectionEff">Collection Efficiency (%) <span class="sort-ico">↕</span></th>
+</tr>
+</thead>
+<tbody id="byCategoryBody">
+<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--ink-3)">Loading category summary...</td></tr>
+</tbody>
+<tfoot id="byCategoryFoot"></tfoot>
 </table>
 </div>
 </section>
@@ -499,5 +541,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261008_2"></script></body>
 </html>

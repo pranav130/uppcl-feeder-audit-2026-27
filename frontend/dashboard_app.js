@@ -19,10 +19,10 @@ function updatePtwBadge(isIncluded) {
    - Works flawlessly both on Live DB (localhost) and GitHub Pages
    ═══════════════════════════════════════════════════════════════ */
 
-// ── Theme Management ──
+// ── Theme Management & Sign Out ──
 (function() {
   const toggleBtn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const saved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', saved);
   if (toggleBtn) toggleBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
 
@@ -31,9 +31,19 @@ function updatePtwBadge(isIncluded) {
       const cur = document.documentElement.getAttribute('data-theme') || 'light';
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('uppcl_theme', next);
       localStorage.setItem('theme', next);
       toggleBtn.textContent = next === 'dark' ? '☀️' : '🌙';
       updateAllChartThemes();
+    });
+  }
+
+  const btnSignOut = document.getElementById('btnSignOut');
+  if (btnSignOut) {
+    btnSignOut.addEventListener('click', () => {
+      sessionStorage.removeItem('uppcl_auth_token');
+      localStorage.removeItem('uppcl_auth_token');
+      window.location.replace('login.html');
     });
   }
 })();
@@ -64,8 +74,12 @@ const state = {
   wfSortDir: -1,
   collapsedDiscoms: new Set(),
   hBarType: 'atc',
-  ftBarGroup: 'feederType'
+  ftBarGroup: 'feederType',
+  categorySortCol: 'consumers',
+  categorySortDir: -1,
+  catTableGroup: 'feederType'
 };
+window.state = state;
 
 const MON_LABELS = ['Apr', 'May', 'Jun', 'Jul', 'Aug'];
 const MON_FULL   = ['April', 'May', 'June', 'July', 'August'];
@@ -89,6 +103,27 @@ const SLAB_COLORS = {
   'IE 0': '#7a8494',
   'No Cons': '#b9c0cb'
 };
+
+const CATEGORY_NAMES = {
+  'HV1': 'Non-Industrial Bulk Power',
+  'HV2': 'Large & Heavy Power',
+  'HV3': 'Railway Traction',
+  'HV4': 'Lift Irrigation',
+  'LMV1': 'Domestic Light, Fan & Power',
+  'LMV2': 'Commercial',
+  'LMV3': 'Public Lamps',
+  'LMV4A': 'Public Institutions',
+  'LMV4B': 'Private Institutions',
+  'LMV5': 'PTW / Agriculture',
+  'LMV6': 'Small & Medium Power',
+  'LMV7': 'Public Water Works',
+  'LMV8': 'State Tube Wells',
+  'LMV9': 'Temporary Supply',
+  'LMV11': 'EV Charging Stations'
+};
+
+const CATEGORY_DATA_BY_DISCOM = {"ALL":[{"category":"HV1","consumers":9769,"billedMu":589.52,"assessmentCr":573.67,"realisedCr":598.08,"abr":9.73,"collectionEff":104.26,"baseRealisedCr":598.08},{"category":"HV2","consumers":17640,"billedMu":41943.41,"assessmentCr":1521.42,"realisedCr":1170.62,"abr":0.36,"collectionEff":76.94,"baseRealisedCr":1170.62},{"category":"HV3","consumers":42,"billedMu":20.94,"assessmentCr":17.37,"realisedCr":17.37,"abr":8.3,"collectionEff":100.0,"baseRealisedCr":17.37},{"category":"HV4","consumers":173,"billedMu":60.73,"assessmentCr":64.19,"realisedCr":64.19,"abr":10.57,"collectionEff":100.0,"baseRealisedCr":64.19},{"category":"LMV1","consumers":24237906,"billedMu":3028.24,"assessmentCr":1379.21,"realisedCr":614.63,"abr":4.55,"collectionEff":44.56,"baseRealisedCr":614.63},{"category":"LMV11","consumers":707,"billedMu":0.92,"assessmentCr":0.58,"realisedCr":0.58,"abr":6.3,"collectionEff":100.0,"baseRealisedCr":0.58},{"category":"LMV2","consumers":3524293,"billedMu":1189.01,"assessmentCr":1060.96,"realisedCr":919.85,"abr":8.92,"collectionEff":86.7,"baseRealisedCr":919.85},{"category":"LMV3","consumers":56832,"billedMu":12.18,"assessmentCr":45.74,"realisedCr":45.76,"abr":37.55,"collectionEff":100.04,"baseRealisedCr":45.76},{"category":"LMV4A","consumers":331047,"billedMu":147.06,"assessmentCr":134.79,"realisedCr":134.79,"abr":9.17,"collectionEff":100.0,"baseRealisedCr":134.79},{"category":"LMV4B","consumers":43558,"billedMu":55.38,"assessmentCr":88.46,"realisedCr":57.42,"abr":15.97,"collectionEff":64.91,"baseRealisedCr":57.42},{"category":"LMV5","consumers":1860562,"billedMu":2735.68,"assessmentCr":133.29,"realisedCr":1.8,"abr":0.49,"collectionEff":1.35,"baseRealisedCr":1.8},{"category":"LMV6","consumers":330523,"billedMu":109.28,"assessmentCr":74.58,"realisedCr":71.87,"abr":6.82,"collectionEff":96.37,"baseRealisedCr":71.87},{"category":"LMV7","consumers":43843,"billedMu":184.2,"assessmentCr":152.65,"realisedCr":152.71,"abr":8.29,"collectionEff":100.04,"baseRealisedCr":152.71},{"category":"LMV8","consumers":36604,"billedMu":116.6,"assessmentCr":84.94,"realisedCr":84.94,"abr":7.28,"collectionEff":100.0,"baseRealisedCr":84.94},{"category":"LMV9","consumers":127219,"billedMu":29.72,"assessmentCr":45.46,"realisedCr":37.12,"abr":15.3,"collectionEff":81.65,"baseRealisedCr":37.12}],"DVVNL":[{"category":"HV1","consumers":1182,"billedMu":51.23,"assessmentCr":54.76,"realisedCr":53.02,"abr":10.69,"collectionEff":96.82,"baseRealisedCr":53.02},{"category":"HV2","consumers":4055,"billedMu":508.19,"assessmentCr":389.64,"realisedCr":279.86,"abr":7.67,"collectionEff":71.83,"baseRealisedCr":279.86},{"category":"HV3","consumers":5,"billedMu":2.49,"assessmentCr":1.9,"realisedCr":1.9,"abr":7.63,"collectionEff":100.0,"baseRealisedCr":1.9},{"category":"HV4","consumers":51,"billedMu":5.78,"assessmentCr":10.61,"realisedCr":10.61,"abr":18.36,"collectionEff":100.0,"baseRealisedCr":10.61},{"category":"LMV1","consumers":4386684,"billedMu":454.0,"assessmentCr":219.56,"realisedCr":90.57,"abr":4.84,"collectionEff":41.25,"baseRealisedCr":90.57},{"category":"LMV11","consumers":62,"billedMu":0.04,"assessmentCr":0.03,"realisedCr":0.02,"abr":7.5,"collectionEff":66.67,"baseRealisedCr":0.02},{"category":"LMV2","consumers":555640,"billedMu":188.3,"assessmentCr":149.41,"realisedCr":142.16,"abr":7.93,"collectionEff":95.15,"baseRealisedCr":142.16},{"category":"LMV3","consumers":21798,"billedMu":4.42,"assessmentCr":14.21,"realisedCr":14.21,"abr":32.15,"collectionEff":100.0,"baseRealisedCr":14.21},{"category":"LMV4A","consumers":77529,"billedMu":37.05,"assessmentCr":42.9,"realisedCr":42.9,"abr":11.58,"collectionEff":100.0,"baseRealisedCr":42.9},{"category":"LMV4B","consumers":9326,"billedMu":11.21,"assessmentCr":12.54,"realisedCr":12.07,"abr":11.19,"collectionEff":96.25,"baseRealisedCr":12.07},{"category":"LMV5","consumers":404241,"billedMu":1051.64,"assessmentCr":59.11,"realisedCr":0.46,"abr":0.56,"collectionEff":0.78,"baseRealisedCr":0.46},{"category":"LMV6","consumers":91302,"billedMu":15.72,"assessmentCr":16.95,"realisedCr":16.91,"abr":10.78,"collectionEff":99.76,"baseRealisedCr":16.91},{"category":"LMV7","consumers":18835,"billedMu":46.56,"assessmentCr":37.56,"realisedCr":37.56,"abr":8.07,"collectionEff":100.0,"baseRealisedCr":37.56},{"category":"LMV8","consumers":8196,"billedMu":31.53,"assessmentCr":21.69,"realisedCr":21.69,"abr":6.88,"collectionEff":100.0,"baseRealisedCr":21.69},{"category":"LMV9","consumers":21678,"billedMu":3.82,"assessmentCr":5.8,"realisedCr":4.99,"abr":15.18,"collectionEff":86.03,"baseRealisedCr":4.99}],"KESCO":[{"category":"HV1","consumers":416,"billedMu":37.69,"assessmentCr":26.77,"realisedCr":27.45,"abr":7.1,"collectionEff":102.54,"baseRealisedCr":27.45},{"category":"HV2","consumers":530,"billedMu":68.1,"assessmentCr":50.03,"realisedCr":28.67,"abr":7.35,"collectionEff":57.31,"baseRealisedCr":28.67},{"category":"HV3","consumers":2,"billedMu":0.65,"assessmentCr":0.0,"realisedCr":0.0,"abr":0.0,"collectionEff":0.0,"baseRealisedCr":0.0},{"category":"LMV1","consumers":5755,"billedMu":15.87,"assessmentCr":10.39,"realisedCr":10.58,"abr":6.55,"collectionEff":101.83,"baseRealisedCr":10.58},{"category":"LMV11","consumers":122,"billedMu":0.12,"assessmentCr":0.07,"realisedCr":0.06,"abr":5.83,"collectionEff":85.71,"baseRealisedCr":0.06},{"category":"LMV2","consumers":190846,"billedMu":51.19,"assessmentCr":46.22,"realisedCr":41.98,"abr":9.03,"collectionEff":90.83,"baseRealisedCr":41.98},{"category":"LMV3","consumers":613,"billedMu":0.02,"assessmentCr":0.26,"realisedCr":0.26,"abr":130.0,"collectionEff":100.0,"baseRealisedCr":0.26},{"category":"LMV4A","consumers":1784,"billedMu":4.21,"assessmentCr":2.59,"realisedCr":2.59,"abr":6.15,"collectionEff":100.0,"baseRealisedCr":2.59},{"category":"LMV4B","consumers":1023,"billedMu":3.18,"assessmentCr":2.87,"realisedCr":2.48,"abr":9.03,"collectionEff":86.41,"baseRealisedCr":2.48},{"category":"LMV5","consumers":27,"billedMu":0.0,"assessmentCr":0.0,"realisedCr":0.0,"abr":0.0,"collectionEff":0.0,"baseRealisedCr":0.0},{"category":"LMV6","consumers":17273,"billedMu":4.09,"assessmentCr":4.42,"realisedCr":3.99,"abr":10.81,"collectionEff":90.27,"baseRealisedCr":3.99},{"category":"LMV7","consumers":1648,"billedMu":7.43,"assessmentCr":5.23,"realisedCr":5.23,"abr":7.04,"collectionEff":100.0,"baseRealisedCr":5.23},{"category":"LMV9","consumers":9160,"billedMu":0.85,"assessmentCr":1.93,"realisedCr":1.32,"abr":22.71,"collectionEff":68.39,"baseRealisedCr":1.32}],"MVVNL":[{"category":"HV1","consumers":2576,"billedMu":154.24,"assessmentCr":139.51,"realisedCr":147.46,"abr":9.04,"collectionEff":105.7,"baseRealisedCr":147.46},{"category":"HV2","consumers":2959,"billedMu":260.79,"assessmentCr":211.99,"realisedCr":173.21,"abr":8.13,"collectionEff":81.71,"baseRealisedCr":173.21},{"category":"HV3","consumers":11,"billedMu":0.0,"assessmentCr":0.0,"realisedCr":0.0,"abr":0.0,"collectionEff":0.0,"baseRealisedCr":0.0},{"category":"HV4","consumers":21,"billedMu":5.12,"assessmentCr":5.52,"realisedCr":5.52,"abr":10.78,"collectionEff":100.0,"baseRealisedCr":5.52},{"category":"LMV1","consumers":7086732,"billedMu":774.33,"assessmentCr":319.7,"realisedCr":114.34,"abr":4.13,"collectionEff":35.76,"baseRealisedCr":114.34},{"category":"LMV11","consumers":180,"billedMu":0.38,"assessmentCr":0.22,"realisedCr":0.21,"abr":5.79,"collectionEff":95.45,"baseRealisedCr":0.21},{"category":"LMV2","consumers":874197,"billedMu":295.37,"assessmentCr":253.11,"realisedCr":236.93,"abr":8.57,"collectionEff":93.61,"baseRealisedCr":236.93},{"category":"LMV3","consumers":12485,"billedMu":4.31,"assessmentCr":10.57,"realisedCr":10.57,"abr":24.52,"collectionEff":100.0,"baseRealisedCr":10.57},{"category":"LMV4A","consumers":106335,"billedMu":43.18,"assessmentCr":36.19,"realisedCr":36.19,"abr":8.38,"collectionEff":100.0,"baseRealisedCr":36.19},{"category":"LMV4B","consumers":10071,"billedMu":11.68,"assessmentCr":12.88,"realisedCr":12.97,"abr":11.03,"collectionEff":100.7,"baseRealisedCr":12.97},{"category":"LMV5","consumers":383676,"billedMu":454.18,"assessmentCr":15.99,"realisedCr":0.47,"abr":0.35,"collectionEff":2.94,"baseRealisedCr":0.47},{"category":"LMV6","consumers":49320,"billedMu":13.22,"assessmentCr":11.7,"realisedCr":11.62,"abr":8.85,"collectionEff":99.32,"baseRealisedCr":11.62},{"category":"LMV7","consumers":7732,"billedMu":31.13,"assessmentCr":27.73,"realisedCr":27.77,"abr":8.91,"collectionEff":100.14,"baseRealisedCr":27.77},{"category":"LMV8","consumers":10436,"billedMu":29.25,"assessmentCr":21.13,"realisedCr":21.13,"abr":7.22,"collectionEff":100.0,"baseRealisedCr":21.13},{"category":"LMV9","consumers":40083,"billedMu":7.12,"assessmentCr":12.21,"realisedCr":9.56,"abr":17.15,"collectionEff":78.3,"baseRealisedCr":9.56}],"PUVNL":[{"category":"HV1","consumers":1980,"billedMu":126.49,"assessmentCr":119.54,"realisedCr":121.33,"abr":9.45,"collectionEff":101.5,"baseRealisedCr":121.33},{"category":"HV2","consumers":2466,"billedMu":473.7,"assessmentCr":364.95,"realisedCr":143.49,"abr":7.7,"collectionEff":39.32,"baseRealisedCr":143.49},{"category":"HV3","consumers":7,"billedMu":0.0,"assessmentCr":0.0,"realisedCr":0.0,"abr":0.0,"collectionEff":0.0,"baseRealisedCr":0.0},{"category":"HV4","consumers":94,"billedMu":49.68,"assessmentCr":47.07,"realisedCr":47.07,"abr":9.47,"collectionEff":100.0,"baseRealisedCr":47.07},{"category":"LMV1","consumers":8819074,"billedMu":1080.16,"assessmentCr":471.12,"realisedCr":151.45,"abr":4.36,"collectionEff":32.15,"baseRealisedCr":151.45},{"category":"LMV11","consumers":138,"billedMu":0.17,"assessmentCr":0.1,"realisedCr":0.11,"abr":5.88,"collectionEff":110.0,"baseRealisedCr":0.11},{"category":"LMV2","consumers":935928,"billedMu":365.55,"assessmentCr":291.27,"realisedCr":225.18,"abr":7.97,"collectionEff":77.31,"baseRealisedCr":225.18},{"category":"LMV3","consumers":14387,"billedMu":2.31,"assessmentCr":12.47,"realisedCr":12.49,"abr":53.98,"collectionEff":100.16,"baseRealisedCr":12.49},{"category":"LMV4A","consumers":99072,"billedMu":42.99,"assessmentCr":34.97,"realisedCr":34.97,"abr":8.13,"collectionEff":100.0,"baseRealisedCr":34.97},{"category":"LMV4B","consumers":12013,"billedMu":14.93,"assessmentCr":43.57,"realisedCr":13.88,"abr":29.18,"collectionEff":31.86,"baseRealisedCr":13.88},{"category":"LMV5","consumers":493840,"billedMu":404.76,"assessmentCr":19.15,"realisedCr":0.49,"abr":0.47,"collectionEff":2.56,"baseRealisedCr":0.49},{"category":"LMV6","consumers":76046,"billedMu":21.79,"assessmentCr":16.46,"realisedCr":15.75,"abr":7.55,"collectionEff":95.69,"baseRealisedCr":15.75},{"category":"LMV7","consumers":7535,"billedMu":56.99,"assessmentCr":40.75,"realisedCr":40.75,"abr":7.15,"collectionEff":100.0,"baseRealisedCr":40.75},{"category":"LMV8","consumers":12734,"billedMu":47.12,"assessmentCr":32.4,"realisedCr":32.4,"abr":6.88,"collectionEff":100.0,"baseRealisedCr":32.4},{"category":"LMV9","consumers":19437,"billedMu":3.69,"assessmentCr":6.54,"realisedCr":5.55,"abr":17.72,"collectionEff":84.86,"baseRealisedCr":5.55}],"PVVNL":[{"category":"HV1","consumers":3615,"billedMu":219.87,"assessmentCr":233.09,"realisedCr":248.82,"abr":10.6,"collectionEff":106.75,"baseRealisedCr":248.82},{"category":"HV2","consumers":7630,"billedMu":40632.63,"assessmentCr":504.81,"realisedCr":545.39,"abr":0.12,"collectionEff":108.04,"baseRealisedCr":545.39},{"category":"HV3","consumers":17,"billedMu":17.8,"assessmentCr":15.47,"realisedCr":15.47,"abr":8.69,"collectionEff":100.0,"baseRealisedCr":15.47},{"category":"HV4","consumers":7,"billedMu":0.15,"assessmentCr":0.99,"realisedCr":0.99,"abr":66.0,"collectionEff":100.0,"baseRealisedCr":0.99},{"category":"LMV1","consumers":3939661,"billedMu":703.88,"assessmentCr":358.44,"realisedCr":247.69,"abr":5.09,"collectionEff":69.1,"baseRealisedCr":247.69},{"category":"LMV11","consumers":205,"billedMu":0.21,"assessmentCr":0.16,"realisedCr":0.18,"abr":7.62,"collectionEff":112.5,"baseRealisedCr":0.18},{"category":"LMV2","consumers":967682,"billedMu":288.6,"assessmentCr":320.95,"realisedCr":273.6,"abr":11.12,"collectionEff":85.25,"baseRealisedCr":273.6},{"category":"LMV3","consumers":7549,"billedMu":1.12,"assessmentCr":8.23,"realisedCr":8.23,"abr":73.48,"collectionEff":100.0,"baseRealisedCr":8.23},{"category":"LMV4A","consumers":46327,"billedMu":19.63,"assessmentCr":18.14,"realisedCr":18.14,"abr":9.24,"collectionEff":100.0,"baseRealisedCr":18.14},{"category":"LMV4B","consumers":11125,"billedMu":14.38,"assessmentCr":16.6,"realisedCr":16.02,"abr":11.54,"collectionEff":96.51,"baseRealisedCr":16.02},{"category":"LMV5","consumers":578778,"billedMu":825.1,"assessmentCr":39.04,"realisedCr":0.38,"abr":0.47,"collectionEff":0.97,"baseRealisedCr":0.38},{"category":"LMV6","consumers":96582,"billedMu":54.46,"assessmentCr":25.05,"realisedCr":23.6,"abr":4.6,"collectionEff":94.21,"baseRealisedCr":23.6},{"category":"LMV7","consumers":8093,"billedMu":42.09,"assessmentCr":41.38,"realisedCr":41.4,"abr":9.83,"collectionEff":100.05,"baseRealisedCr":41.4},{"category":"LMV8","consumers":5238,"billedMu":8.7,"assessmentCr":9.72,"realisedCr":9.72,"abr":11.17,"collectionEff":100.0,"baseRealisedCr":9.72},{"category":"LMV9","consumers":36861,"billedMu":14.24,"assessmentCr":18.98,"realisedCr":15.7,"abr":13.33,"collectionEff":82.72,"baseRealisedCr":15.7}]};
+
 
 function normalizeDiscom(d) {
   if (!d) return '';
@@ -492,16 +527,16 @@ function calculateMetrics() {
 
     // Nature & Area accumulator
     if (!natureGroups.has(natureName)) {
-      natureGroups.set(natureName, { category: natureName, feeders: 0, ie: 0, se: 0, ass: 0, real: 0 });
+      natureGroups.set(natureName, { category: natureName, feeders: 0, consumers: 0, ie: 0, se: 0, ass: 0, real: 0 });
     }
     const ng = natureGroups.get(natureName);
-    ng.feeders++; ng.ie += fIE; ng.se += fSE; ng.ass += fAss; ng.real += fReal;
+    ng.feeders++; ng.consumers += (cons || 0); ng.ie += fIE; ng.se += fSE; ng.ass += fAss; ng.real += fReal;
 
     if (!areaGroups.has(areaName)) {
-      areaGroups.set(areaName, { category: areaName, feeders: 0, ie: 0, se: 0, ass: 0, real: 0 });
+      areaGroups.set(areaName, { category: areaName, feeders: 0, consumers: 0, ie: 0, se: 0, ass: 0, real: 0 });
     }
     const ag = areaGroups.get(areaName);
-    ag.feeders++; ag.ie += fIE; ag.se += fSE; ag.ass += fAss; ag.real += fReal;
+    ag.feeders++; ag.consumers += (cons || 0); ag.ie += fIE; ag.se += fSE; ag.ass += fAss; ag.real += fReal;
 
     usedFeeders.push({
       discom: discomName,
@@ -596,6 +631,62 @@ function calculateMetrics() {
         atcLossValueCr: dValCr
       };
     }),
+    categoryBreakdown: {
+      feederType: [...natureGroups.values()].map(g => {
+        const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
+        const ce = g.ass > 0 ? (g.real / g.ass) * 100 : (g.real > 0 ? 100 : 0);
+        const atc = 100 - (be * ce / 100);
+        const abr = g.se > 0 ? (g.ass * 100) / g.se : 0;
+        const thruRate = g.ie > 0 ? (g.real * 100) / g.ie : 0;
+        const atcLossValueCr = (g.ie * 1000 * abr * atc / 100) / 1e7;
+        return {
+          category: g.category,
+          feeders: g.feeders,
+          consumers: g.consumers,
+          inputMu: g.ie / 1000,
+          billedMu: g.se / 1000,
+          billingEff: be,
+          collectionEff: ce,
+          atcLoss: atc,
+          abr: abr,
+          thruRate: thruRate,
+          ie: g.ie,
+          se: g.se,
+          ass: g.ass,
+          real: g.real,
+          assessedCr: g.ass / 100,
+          realisedCr: g.real / 100,
+          atcLossValueCr: atcLossValueCr
+        };
+      }),
+      area: [...areaGroups.values()].map(g => {
+        const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
+        const ce = g.ass > 0 ? (g.real / g.ass) * 100 : (g.real > 0 ? 100 : 0);
+        const atc = 100 - (be * ce / 100);
+        const abr = g.se > 0 ? (g.ass * 100) / g.se : 0;
+        const thruRate = g.ie > 0 ? (g.real * 100) / g.ie : 0;
+        const atcLossValueCr = (g.ie * 1000 * abr * atc / 100) / 1e7;
+        return {
+          category: g.category,
+          feeders: g.feeders,
+          consumers: g.consumers,
+          inputMu: g.ie / 1000,
+          billedMu: g.se / 1000,
+          billingEff: be,
+          collectionEff: ce,
+          atcLoss: atc,
+          abr: abr,
+          thruRate: thruRate,
+          ie: g.ie,
+          se: g.se,
+          ass: g.ass,
+          real: g.real,
+          assessedCr: g.ass / 100,
+          realisedCr: g.real / 100,
+          atcLossValueCr: atcLossValueCr
+        };
+      })
+    },
     feederTypeBreakdown: {
       feederType: [...natureGroups.values()].map(g => {
         const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
@@ -630,7 +721,8 @@ function renderKpis(d) {
   document.getElementById('kpiLossPerUnit').textContent = fmt(d.lossPerUnit, 2);
   document.getElementById('kpiAss').textContent = fmt(d.assessmentCr);
   document.getElementById('kpiReal').textContent = fmt(d.realizationCr);
-  document.getElementById('kpiALV').textContent = fmt(d.atcLossValueCr);
+  const elALV = document.getElementById('kpiALV');
+  if (elALV) elALV.textContent = fmt(d.atcLossValueCr);
 
   document.getElementById('cntTotal').textContent = fmt(d.totalFeeders);
   document.getElementById('cntAudited').textContent = fmt(d.auditedFeeders);
@@ -800,6 +892,102 @@ window.filterByDiscomName = function(dName) {
   onFilterChanged();
 };
 
+function renderCategoryTable(data) {
+  const tbody = document.getElementById('byCategoryBody');
+  const tfoot = document.getElementById('byCategoryFoot');
+  if (!tbody) return;
+
+  // Resolve active discom
+  let discKey = 'ALL';
+  const selDisc = (state.discom || '').toUpperCase().trim();
+  if (selDisc) {
+    if (selDisc.includes('DAKSHIN') || selDisc === 'DVVNL') discKey = 'DVVNL';
+    else if (selDisc.includes('PASCHIM') || selDisc === 'PVVNL') discKey = 'PVVNL';
+    else if (selDisc.includes('MADHYA') || selDisc === 'MVVNL') discKey = 'MVVNL';
+    else if (selDisc.includes('POORV') || selDisc.includes('PURV') || selDisc === 'PUVNL' || selDisc === 'PUVVNL') discKey = 'PUVNL';
+    else if (selDisc.includes('KESCO')) discKey = 'KESCO';
+  }
+
+  const rawRows = (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM[discKey]) ? CATEGORY_DATA_BY_DISCOM[discKey] : (CATEGORY_DATA_BY_DISCOM['ALL'] || []);
+
+  // Clone rows and handle PTW toggle rule
+  const rows = rawRows.map(r => {
+    const item = { ...r };
+    item.desc = (typeof CATEGORY_NAMES !== 'undefined' && CATEGORY_NAMES[item.category]) ? CATEGORY_NAMES[item.category] : '';
+    if (item.category === 'LMV5') {
+      if (state.includePtw) {
+        item.realisedCr = item.assessmentCr;
+        item.collectionEff = 100.0;
+      } else {
+        item.realisedCr = item.baseRealisedCr;
+        item.collectionEff = item.assessmentCr > 0 ? Math.round((item.baseRealisedCr / item.assessmentCr * 100) * 100) / 100 : 0.0;
+      }
+    }
+    return item;
+  });
+
+  let sorted = [...rows];
+  if (state.categorySortCol) {
+    const col = state.categorySortCol;
+    const dir = state.categorySortDir;
+    sorted.sort((a, b) => {
+      const va = a[col];
+      const vb = b[col];
+      if (typeof va === 'string') return dir * va.localeCompare(vb);
+      return dir * ((Number(va) || 0) - (Number(vb) || 0));
+    });
+  }
+
+  if (!sorted.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--ink-3)">No category data available for current selection.</td></tr>`;
+    if (tfoot) tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(r => {
+    const ceColor = r.collectionEff < 70 ? 'var(--crit)' : r.collectionEff < 90 ? 'var(--warn)' : 'var(--good)';
+    return `
+      <tr>
+        <td class="tx" style="font-weight:600;color:var(--accent);">
+          ${r.category}
+          <span style="font-size:11px;color:var(--ink-3);font-weight:normal;margin-left:6px;">${r.desc}</span>
+        </td>
+        <td style="font-weight:600;">${fmt(r.consumers)}</td>
+        <td>${fmt(r.billedMu, 2)}</td>
+        <td>₹${fmt(r.assessmentCr, 2)}</td>
+        <td>₹${fmt(r.realisedCr, 2)}</td>
+        <td style="font-weight:600;">₹${fmt(r.abr, 2)}</td>
+        <td style="font-weight:600;color:${ceColor};">${fmt(r.collectionEff, 2)}%</td>
+      </tr>
+    `;
+  }).join('');
+
+  if (tfoot) {
+    let totC = 0, totMu = 0, totAss = 0, totReal = 0;
+    for (const r of rows) {
+      totC += (r.consumers || 0);
+      totMu += (r.billedMu || 0);
+      totAss += (r.assessmentCr || 0);
+      totReal += (r.realisedCr || 0);
+    }
+    const totAbr = totMu > 0 ? (totAss * 10) / totMu : 0;
+    const totCe = totAss > 0 ? (totReal / totAss) * 100 : (totReal > 0 ? 100 : 0);
+    const ceColor = totCe < 70 ? 'var(--crit)' : totCe < 90 ? 'var(--warn)' : 'var(--good)';
+
+    tfoot.innerHTML = `
+      <tr class="grand">
+        <td class="tx" style="font-weight:700;">Total (${discKey})</td>
+        <td style="font-weight:700;">${fmt(totC)}</td>
+        <td style="font-weight:700;">${fmt(totMu, 2)}</td>
+        <td style="font-weight:700;">₹${fmt(totAss, 2)}</td>
+        <td style="font-weight:700;">₹${fmt(totReal, 2)}</td>
+        <td style="font-weight:700;">₹${fmt(totAbr, 2)}</td>
+        <td style="font-weight:700;color:${ceColor};">${fmt(totCe, 2)}%</td>
+      </tr>
+    `;
+  }
+}
+
 function renderWorstFeeders(rows, totalAuditedAbove70) {
   const tbody = document.getElementById('wfTableBody');
   if (!tbody) return;
@@ -831,8 +1019,10 @@ function renderWorstFeeders(rows, totalAuditedAbove70) {
     });
   }
 
-  tbody.innerHTML = sorted.map((r, i) => `
-    <tr class="drill" onclick="window.open('feeder_drilldown.html?search=${encodeURIComponent(r.feeder)}', '_blank')">
+  tbody.innerHTML = sorted.map((r, i) => {
+    const drillUrl = `feeder_drilldown.html?type=atc_loss&slab=${encodeURIComponent('Above 70%')}&search=${encodeURIComponent(r.feeder).replace(/\+/g, '%2B')}`;
+    return `
+    <tr class="drill" onclick="window.open('${drillUrl}', '_blank')">
       <td class="tx" style="color:var(--ink-3)">${i + 1}</td>
       <td class="tx" style="font-weight:600">${r.discom}</td>
       <td class="tx">${r.zone}</td>
@@ -840,9 +1030,10 @@ function renderWorstFeeders(rows, totalAuditedAbove70) {
       <td class="tx" style="font-weight:600;color:var(--accent)">${r.feeder}</td>
       <td>${lossPill(r.ll, true)}</td>
       <td>${lossPill(r.atc, false)}</td>
-      <td class="tx"><a href="feeder_drilldown.html?search=${encodeURIComponent(r.feeder)}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:500;">Inspect →</a></td>
+      <td class="tx"><a href="${drillUrl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:500;">Inspect →</a></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderTop150Table(rows) {
@@ -868,8 +1059,11 @@ function renderTop150Table(rows) {
     });
   }
 
-  tbody.innerHTML = sorted.map((r, i) => `
-    <tr class="drill" onclick="window.open('feeder_drilldown.html?search=${encodeURIComponent(r.feeder)}', '_blank')">
+  tbody.innerHTML = sorted.map((r, i) => {
+    const targetSlab = r.atcSlab || 'Above 70%';
+    const drillUrl = `feeder_drilldown.html?type=atc_loss&slab=${encodeURIComponent(targetSlab)}&search=${encodeURIComponent(r.feeder).replace(/\+/g, '%2B')}`;
+    return `
+    <tr class="drill" onclick="window.open('${drillUrl}', '_blank')">
       <td class="tx" style="color:var(--ink-3)">${i + 1}</td>
       <td class="tx">${r.division}</td>
       <td class="tx">${r.substation}</td>
@@ -883,7 +1077,8 @@ function renderTop150Table(rows) {
       <td>${thruRatePill(r.fTr)}</td>
       <td style="font-weight:700;color:var(--crit);">₹${fmt(r.atcLossValueCr, 2)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderProgressiveSummaryTable(groups) {
@@ -1091,10 +1286,12 @@ function onFilterChanged() {
   renderSlabCharts(computedResult.lineSlabs, computedResult.atcSlabs);
   renderFeederTypeBreakdown(computedResult.feederTypeBreakdown);
   renderByDiscomTable(computedResult.discomSummary);
+  renderCategoryTable(computedResult.categoryBreakdown);
   renderWorstFeeders(computedResult.worst10, computedResult.atcSlabs['Above 70%']);
   renderTop150Table(computedResult.top150);
   renderProgressiveSummaryTable(computedResult.progressiveSummary);
 }
+window.onFilterChanged = onFilterChanged;
 
 // ── Event Listeners ──
 
@@ -1251,7 +1448,7 @@ document.querySelectorAll('[data-ft-toggle]').forEach(btn => {
 });
 
 // Reset Button
-window.resetFilters = function() {
+function resetFilters() {
   state.discom = '';
   state.zone = '';
   state.circle = '';
@@ -1269,6 +1466,9 @@ window.resetFilters = function() {
   state.sortDir = 1;
   state.discomSortCol = null;
   state.discomSortDir = -1;
+  state.categorySortCol = 'consumers';
+  state.categorySortDir = -1;
+  state.catTableGroup = 'feederType';
   state.top150SortCol = 'atcLossValueCr';
   state.top150SortDir = -1;
   state.wfSortCol = 'atc';
@@ -1304,12 +1504,23 @@ window.resetFilters = function() {
     const ico = wDef.querySelector('.sort-ico');
     if (ico) ico.textContent = '▼';
   }
+  const cDef = document.querySelector('#tblByCategory th[data-ccol="consumers"]');
+  if (cDef) {
+    cDef.classList.add('sorted');
+    const ico = cDef.querySelector('.sort-ico');
+    if (ico) ico.textContent = '▼';
+  }
+  document.querySelectorAll('[data-cat-toggle]').forEach(b => {
+    b.setAttribute('aria-pressed', b.getAttribute('data-cat-toggle') === 'feederType' ? 'true' : 'false');
+  });
 
   syncCascadeDropdowns();
   onFilterChanged();
-};
+}
+window.resetFilters = resetFilters;
 
-document.getElementById('btnReset').addEventListener('click', resetFilters);
+const btnReset = document.getElementById('btnReset');
+if (btnReset) btnReset.addEventListener('click', resetFilters);
 
 // ── 1. Summary Table Sorting (#summaryTbl) ──
 document.querySelectorAll('#summaryTbl th[data-col]').forEach(th => {
@@ -1350,6 +1561,25 @@ document.querySelectorAll('#tblByDiscom th[data-dcol]').forEach(th => {
     if (computedResult) {
       renderByDiscomTable(computedResult.discomSummary);
     }
+  });
+});
+
+// ── 2b. By Category Table Sorting (#tblByCategory) ──
+document.querySelectorAll('#tblByCategory th[data-ccol]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-ccol');
+    if (state.categorySortCol === col) {
+      state.categorySortDir *= -1;
+    } else {
+      state.categorySortCol = col;
+      state.categorySortDir = -1;
+    }
+    document.querySelectorAll('#tblByCategory th.sorted').forEach(t => t.classList.remove('sorted'));
+    document.querySelectorAll('#tblByCategory th .sort-ico').forEach(ico => ico.textContent = '↕');
+    th.classList.add('sorted');
+    const sortIcon = th.querySelector('.sort-ico');
+    if (sortIcon) sortIcon.textContent = state.categorySortDir === 1 ? '▲' : '▼';
+    renderCategoryTable();
   });
 });
 
@@ -1468,6 +1698,98 @@ function exportExecutiveSummaryCsv() {
 
 const btnSummaryCsv = document.getElementById('btnSummaryCsv');
 if (btnSummaryCsv) btnSummaryCsv.addEventListener('click', exportExecutiveSummaryCsv);
+
+// ── Export Category Summary CSV (#btnExportCategoryCsv) ──
+function exportCategorySummaryCsv() {
+  let discKey = 'ALL';
+  const selDisc = (state.discom || '').toUpperCase().trim();
+  if (selDisc) {
+    if (selDisc.includes('DAKSHIN') || selDisc === 'DVVNL') discKey = 'DVVNL';
+    else if (selDisc.includes('PASCHIM') || selDisc === 'PVVNL') discKey = 'PVVNL';
+    else if (selDisc.includes('MADHYA') || selDisc === 'MVVNL') discKey = 'MVVNL';
+    else if (selDisc.includes('POORV') || selDisc.includes('PURV') || selDisc === 'PUVNL' || selDisc === 'PUVVNL') discKey = 'PUVNL';
+    else if (selDisc.includes('KESCO')) discKey = 'KESCO';
+  }
+
+  const rawRows = (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM[discKey]) ? CATEGORY_DATA_BY_DISCOM[discKey] : (CATEGORY_DATA_BY_DISCOM['ALL'] || []);
+  const rows = rawRows.map(r => {
+    const item = { ...r };
+    item.desc = (typeof CATEGORY_NAMES !== 'undefined' && CATEGORY_NAMES[item.category]) ? CATEGORY_NAMES[item.category] : '';
+    if (item.category === 'LMV5') {
+      if (state.includePtw) {
+        item.realisedCr = item.assessmentCr;
+        item.collectionEff = 100.0;
+      } else {
+        item.realisedCr = item.baseRealisedCr;
+        item.collectionEff = item.assessmentCr > 0 ? Math.round((item.baseRealisedCr / item.assessmentCr * 100) * 100) / 100 : 0.0;
+      }
+    }
+    return item;
+  });
+
+  const headers = [
+    'Category', 'Description', 'No. of Consumers', 'Billed Energy (MU)',
+    'Assessment (Rs Cr)', 'Realised Amount (Rs Cr)', 'Average Billing Rate (Rs/kWh)',
+    'Collection Efficiency (%)'
+  ];
+
+  const escapeVal = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const csvLines = [];
+  csvLines.push(`# UPPCL Category-wise Performance Summary (Scope: ${discKey})`);
+  csvLines.push(`# Generated: ${new Date().toLocaleString('en-IN')}`);
+  csvLines.push(headers.join(','));
+
+  let totC = 0, totMu = 0, totAss = 0, totReal = 0;
+  for (const r of rows) {
+    totC += (r.consumers || 0);
+    totMu += (r.billedMu || 0);
+    totAss += (r.assessmentCr || 0);
+    totReal += (r.realisedCr || 0);
+
+    csvLines.push([
+      escapeVal(r.category),
+      escapeVal(r.desc),
+      r.consumers || 0,
+      r.billedMu ? r.billedMu.toFixed(2) : 0,
+      r.assessmentCr ? r.assessmentCr.toFixed(2) : 0,
+      r.realisedCr ? r.realisedCr.toFixed(2) : 0,
+      r.abr ? r.abr.toFixed(2) : 0,
+      r.collectionEff ? r.collectionEff.toFixed(2) : 0
+    ].join(','));
+  }
+
+  const totAbr = totMu > 0 ? (totAss * 10) / totMu : 0;
+  const totCe = totAss > 0 ? (totReal / totAss) * 100 : (totReal > 0 ? 100 : 0);
+
+  csvLines.push([
+    `Total (${discKey})`,
+    'All Categories Combined',
+    totC,
+    totMu.toFixed(2),
+    totAss.toFixed(2),
+    totReal.toFixed(2),
+    totAbr.toFixed(2),
+    totCe.toFixed(2)
+  ].join(','));
+
+  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `UPPCL_Category_Performance_Summary_${discKey}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const btnExportCategoryCsv = document.getElementById('btnExportCategoryCsv');
+if (btnExportCategoryCsv) btnExportCategoryCsv.addEventListener('click', exportCategorySummaryCsv);
 
 // ── 6. Export Progressive Summary CSV (WYSIWYG: strictly honors Discom expansion & compression) ──
 function exportProgressiveSummaryCsv() {

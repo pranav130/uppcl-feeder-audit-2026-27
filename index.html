@@ -283,18 +283,14 @@
 </table>
 </div>
 </section>
-<!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE (NEW) ── -->
+<!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE ── -->
 <section class="panel">
 <div class="ph">
 <div>
 <h2>📊 Category-wise Performance Summary</h2>
-<p class="hint">Category-wise breakdown showing Consumers, Average Billing Rate (ABR), Collection Efficiency &amp; Losses</p>
+<p class="hint">Tariff Category-wise breakdown from clean.supply_type_category showing Consumers, Billed Energy, Assessment, Realization, ABR &amp; Collection Efficiency</p>
 </div>
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-<div class="seg" role="group">
-<button aria-pressed="true" data-cat-toggle="feederType" type="button">Feeder Type</button>
-<button aria-pressed="false" data-cat-toggle="area" type="button">Project Area</button>
-</div>
 <button class="btn" id="btnExportCategoryCsv" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Export Category Summary to CSV" type="button">⬇ Export CSV</button>
 </div>
 </div>
@@ -303,20 +299,16 @@
 <thead>
 <tr>
 <th class="tx" data-ccol="category">Category <span class="sort-ico">↕</span></th>
-<th data-ccol="feeders">Feeders <span class="sort-ico">↕</span></th>
-<th class="sorted" data-ccol="consumers">Consumers <span class="sort-ico">▼</span></th>
-<th data-ccol="inputMu">Input MU <span class="sort-ico">↕</span></th>
-<th data-ccol="billedMu">Billed MU <span class="sort-ico">↕</span></th>
-<th data-ccol="billingEff">Billing Eff. <span class="sort-ico">↕</span></th>
-<th data-ccol="collectionEff">Collection Eff. <span class="sort-ico">↕</span></th>
-<th data-ccol="atcLoss">AT&amp;C Loss <span class="sort-ico">↕</span></th>
-<th data-ccol="abr">ABR ₹/kWh <span class="sort-ico">↕</span></th>
-<th data-ccol="thruRate">Thru Rate ₹/kWh <span class="sort-ico">↕</span></th>
-<th data-ccol="realisedCr">Realised ₹Cr <span class="sort-ico">↕</span></th>
+<th class="sorted" data-ccol="consumers">No. of Consumers <span class="sort-ico">▼</span></th>
+<th data-ccol="billedMu">Billed Energy (MU) <span class="sort-ico">↕</span></th>
+<th data-ccol="assessmentCr">Assessment (₹ Cr) <span class="sort-ico">↕</span></th>
+<th data-ccol="realisedCr">Realised Amount (₹ Cr) <span class="sort-ico">↕</span></th>
+<th data-ccol="abr">Average Billing Rate (₹/kWh) <span class="sort-ico">↕</span></th>
+<th data-ccol="collectionEff">Collection Efficiency (%) <span class="sort-ico">↕</span></th>
 </tr>
 </thead>
 <tbody id="byCategoryBody">
-<tr><td colspan="11" style="text-align:center;padding:16px;color:var(--ink-3)">Loading category summary...</td></tr>
+<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--ink-3)">Loading category summary...</td></tr>
 </tbody>
 <tfoot id="byCategoryFoot"></tfoot>
 </table>
@@ -549,5 +541,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261008_1"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261008_2"></script></body>
 </html>
