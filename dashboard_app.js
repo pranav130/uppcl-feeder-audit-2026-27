@@ -74,7 +74,10 @@ const state = {
   wfSortDir: -1,
   collapsedDiscoms: new Set(),
   hBarType: 'atc',
-  ftBarGroup: 'feederType'
+  ftBarGroup: 'feederType',
+  categorySortCol: 'consumers',
+  categorySortDir: -1,
+  catTableGroup: 'feederType'
 };
 window.state = state;
 
@@ -503,16 +506,16 @@ function calculateMetrics() {
 
     // Nature & Area accumulator
     if (!natureGroups.has(natureName)) {
-      natureGroups.set(natureName, { category: natureName, feeders: 0, ie: 0, se: 0, ass: 0, real: 0 });
+      natureGroups.set(natureName, { category: natureName, feeders: 0, consumers: 0, ie: 0, se: 0, ass: 0, real: 0 });
     }
     const ng = natureGroups.get(natureName);
-    ng.feeders++; ng.ie += fIE; ng.se += fSE; ng.ass += fAss; ng.real += fReal;
+    ng.feeders++; ng.consumers += (cons || 0); ng.ie += fIE; ng.se += fSE; ng.ass += fAss; ng.real += fReal;
 
     if (!areaGroups.has(areaName)) {
-      areaGroups.set(areaName, { category: areaName, feeders: 0, ie: 0, se: 0, ass: 0, real: 0 });
+      areaGroups.set(areaName, { category: areaName, feeders: 0, consumers: 0, ie: 0, se: 0, ass: 0, real: 0 });
     }
     const ag = areaGroups.get(areaName);
-    ag.feeders++; ag.ie += fIE; ag.se += fSE; ag.ass += fAss; ag.real += fReal;
+    ag.feeders++; ag.consumers += (cons || 0); ag.ie += fIE; ag.se += fSE; ag.ass += fAss; ag.real += fReal;
 
     usedFeeders.push({
       discom: discomName,
@@ -607,6 +610,62 @@ function calculateMetrics() {
         atcLossValueCr: dValCr
       };
     }),
+    categoryBreakdown: {
+      feederType: [...natureGroups.values()].map(g => {
+        const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
+        const ce = g.ass > 0 ? (g.real / g.ass) * 100 : (g.real > 0 ? 100 : 0);
+        const atc = 100 - (be * ce / 100);
+        const abr = g.se > 0 ? (g.ass * 100) / g.se : 0;
+        const thruRate = g.ie > 0 ? (g.real * 100) / g.ie : 0;
+        const atcLossValueCr = (g.ie * 1000 * abr * atc / 100) / 1e7;
+        return {
+          category: g.category,
+          feeders: g.feeders,
+          consumers: g.consumers,
+          inputMu: g.ie / 1000,
+          billedMu: g.se / 1000,
+          billingEff: be,
+          collectionEff: ce,
+          atcLoss: atc,
+          abr: abr,
+          thruRate: thruRate,
+          ie: g.ie,
+          se: g.se,
+          ass: g.ass,
+          real: g.real,
+          assessedCr: g.ass / 100,
+          realisedCr: g.real / 100,
+          atcLossValueCr: atcLossValueCr
+        };
+      }),
+      area: [...areaGroups.values()].map(g => {
+        const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
+        const ce = g.ass > 0 ? (g.real / g.ass) * 100 : (g.real > 0 ? 100 : 0);
+        const atc = 100 - (be * ce / 100);
+        const abr = g.se > 0 ? (g.ass * 100) / g.se : 0;
+        const thruRate = g.ie > 0 ? (g.real * 100) / g.ie : 0;
+        const atcLossValueCr = (g.ie * 1000 * abr * atc / 100) / 1e7;
+        return {
+          category: g.category,
+          feeders: g.feeders,
+          consumers: g.consumers,
+          inputMu: g.ie / 1000,
+          billedMu: g.se / 1000,
+          billingEff: be,
+          collectionEff: ce,
+          atcLoss: atc,
+          abr: abr,
+          thruRate: thruRate,
+          ie: g.ie,
+          se: g.se,
+          ass: g.ass,
+          real: g.real,
+          assessedCr: g.ass / 100,
+          realisedCr: g.real / 100,
+          atcLossValueCr: atcLossValueCr
+        };
+      })
+    },
     feederTypeBreakdown: {
       feederType: [...natureGroups.values()].map(g => {
         const be = g.ie > 0 ? (g.se / g.ie) * 100 : 0;
@@ -809,6 +868,103 @@ window.filterByDiscomName = function(dName) {
   state.circle = '';
   state.division = '';
   syncCascadeDropdowns();
+  onFilterChanged();
+};
+
+function renderCategoryTable(data) {
+  const tbody = document.getElementById('byCategoryBody');
+  const tfoot = document.getElementById('byCategoryFoot');
+  if (!tbody || !data) return;
+
+  const isArea = state.catTableGroup === 'area';
+  const rows = (isArea ? data.area : data.feederType) || [];
+
+  let sorted = [...rows];
+  if (state.categorySortCol) {
+    const col = state.categorySortCol;
+    const dir = state.categorySortDir;
+    sorted.sort((a, b) => {
+      const va = a[col];
+      const vb = b[col];
+      if (typeof va === 'string') return dir * va.localeCompare(vb);
+      return dir * ((Number(va) || 0) - (Number(vb) || 0));
+    });
+  }
+
+  if (!sorted.length) {
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:16px;color:var(--ink-3)">No category data available for current selection.</td></tr>`;
+    if (tfoot) tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(r => `
+    <tr class="drill" onclick="filterByCategoryName('${r.category}')" title="Click to filter by ${r.category}">
+      <td class="tx" style="font-weight:600;color:var(--accent);">${r.category}</td>
+      <td>${fmt(r.feeders)}</td>
+      <td style="font-weight:600;">${fmt(r.consumers)}</td>
+      <td>${fmt(r.inputMu, 1)}</td>
+      <td>${fmt(r.billedMu, 1)}</td>
+      <td>${fmt(r.billingEff, 1)}%</td>
+      <td style="font-weight:600;color:${r.collectionEff < 70 ? 'var(--crit)' : r.collectionEff < 90 ? 'var(--warn)' : 'var(--good)'};">${fmt(r.collectionEff, 1)}%</td>
+      <td>${lossPill(r.atcLoss, false)}</td>
+      <td style="font-weight:600;">₹${fmt(r.abr, 2)}</td>
+      <td>${thruRatePill(r.thruRate)}</td>
+      <td>₹${fmt(r.realisedCr, 1)}</td>
+    </tr>
+  `).join('');
+
+  if (tfoot) {
+    let totF = 0, totC = 0, totIE = 0, totSE = 0, totAss = 0, totReal = 0;
+    for (const r of rows) {
+      totF += r.feeders;
+      totC += r.consumers;
+      totIE += r.ie;
+      totSE += r.se;
+      totAss += r.ass;
+      totReal += r.real;
+    }
+    const totBE = totIE > 0 ? (totSE / totIE) * 100 : 0;
+    const totCE = totAss > 0 ? (totReal / totAss) * 100 : (totReal > 0 ? 100 : 0);
+    const totATC = 100 - (totBE * totCE / 100);
+    const totABR = totSE > 0 ? (totAss * 100) / totSE : 0;
+    const totTR  = totIE > 0 ? (totReal * 100) / totIE : 0;
+
+    tfoot.innerHTML = `
+      <tr class="grand">
+        <td class="tx" style="font-weight:700;">Total</td>
+        <td>${fmt(totF)}</td>
+        <td style="font-weight:700;">${fmt(totC)}</td>
+        <td>${fmt(totIE / 1000, 1)}</td>
+        <td>${fmt(totSE / 1000, 1)}</td>
+        <td>${fmt(totBE, 1)}%</td>
+        <td style="font-weight:700;color:${totCE < 70 ? 'var(--crit)' : totCE < 90 ? 'var(--warn)' : 'var(--good)'};">${fmt(totCE, 1)}%</td>
+        <td>${lossPill(totATC, false)}</td>
+        <td style="font-weight:700;">₹${fmt(totABR, 2)}</td>
+        <td>${thruRatePill(totTR)}</td>
+        <td>₹${fmt(totReal / 100, 1)}</td>
+      </tr>
+    `;
+  }
+}
+
+window.filterByCategoryName = function(catName) {
+  if (state.catTableGroup === 'area') {
+    if (state.area === catName) {
+      state.area = '';
+      document.getElementById('fArea').value = '';
+    } else {
+      state.area = catName;
+      document.getElementById('fArea').value = catName;
+    }
+  } else {
+    if (state.feederType === catName) {
+      state.feederType = '';
+      document.getElementById('fFeederType').value = '';
+    } else {
+      state.feederType = catName;
+      document.getElementById('fFeederType').value = catName;
+    }
+  }
   onFilterChanged();
 };
 
@@ -1110,6 +1266,7 @@ function onFilterChanged() {
   renderSlabCharts(computedResult.lineSlabs, computedResult.atcSlabs);
   renderFeederTypeBreakdown(computedResult.feederTypeBreakdown);
   renderByDiscomTable(computedResult.discomSummary);
+  renderCategoryTable(computedResult.categoryBreakdown);
   renderWorstFeeders(computedResult.worst10, computedResult.atcSlabs['Above 70%']);
   renderTop150Table(computedResult.top150);
   renderProgressiveSummaryTable(computedResult.progressiveSummary);
@@ -1289,6 +1446,9 @@ function resetFilters() {
   state.sortDir = 1;
   state.discomSortCol = null;
   state.discomSortDir = -1;
+  state.categorySortCol = 'consumers';
+  state.categorySortDir = -1;
+  state.catTableGroup = 'feederType';
   state.top150SortCol = 'atcLossValueCr';
   state.top150SortDir = -1;
   state.wfSortCol = 'atc';
@@ -1324,6 +1484,15 @@ function resetFilters() {
     const ico = wDef.querySelector('.sort-ico');
     if (ico) ico.textContent = '▼';
   }
+  const cDef = document.querySelector('#tblByCategory th[data-ccol="consumers"]');
+  if (cDef) {
+    cDef.classList.add('sorted');
+    const ico = cDef.querySelector('.sort-ico');
+    if (ico) ico.textContent = '▼';
+  }
+  document.querySelectorAll('[data-cat-toggle]').forEach(b => {
+    b.setAttribute('aria-pressed', b.getAttribute('data-cat-toggle') === 'feederType' ? 'true' : 'false');
+  });
 
   syncCascadeDropdowns();
   onFilterChanged();
@@ -1371,6 +1540,39 @@ document.querySelectorAll('#tblByDiscom th[data-dcol]').forEach(th => {
     if (sortIcon) sortIcon.textContent = state.discomSortDir === 1 ? '▲' : '▼';
     if (computedResult) {
       renderByDiscomTable(computedResult.discomSummary);
+    }
+  });
+});
+
+// ── 2b. By Category Table Sorting (#tblByCategory) ──
+document.querySelectorAll('#tblByCategory th[data-ccol]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-ccol');
+    if (state.categorySortCol === col) {
+      state.categorySortDir *= -1;
+    } else {
+      state.categorySortCol = col;
+      state.categorySortDir = -1;
+    }
+    document.querySelectorAll('#tblByCategory th.sorted').forEach(t => t.classList.remove('sorted'));
+    document.querySelectorAll('#tblByCategory th .sort-ico').forEach(ico => ico.textContent = '↕');
+    th.classList.add('sorted');
+    const sortIcon = th.querySelector('.sort-ico');
+    if (sortIcon) sortIcon.textContent = state.categorySortDir === 1 ? '▲' : '▼';
+    if (computedResult) {
+      renderCategoryTable(computedResult.categoryBreakdown);
+    }
+  });
+});
+
+// Category Feeder Type / Project Area toggle
+document.querySelectorAll('[data-cat-toggle]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cat-toggle]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    state.catTableGroup = btn.getAttribute('data-cat-toggle');
+    if (computedResult) {
+      renderCategoryTable(computedResult.categoryBreakdown);
     }
   });
 });
@@ -1490,6 +1692,93 @@ function exportExecutiveSummaryCsv() {
 
 const btnSummaryCsv = document.getElementById('btnSummaryCsv');
 if (btnSummaryCsv) btnSummaryCsv.addEventListener('click', exportExecutiveSummaryCsv);
+
+// ── Export Category Summary CSV (#btnExportCategoryCsv) ──
+function exportCategorySummaryCsv() {
+  if (!computedResult || !computedResult.categoryBreakdown) return;
+  const isArea = state.catTableGroup === 'area';
+  const rows = (isArea ? computedResult.categoryBreakdown.area : computedResult.categoryBreakdown.feederType) || [];
+  const groupLabel = isArea ? 'Project Area' : 'Feeder Category (Nature)';
+
+  const headers = [
+    groupLabel, 'Feeders', 'No. of Consumers', 'Input Energy (MU)', 'Billed Energy (MU)',
+    'Billing Efficiency (%)', 'Collection Efficiency (%)', 'Line Loss (%)',
+    'AT&C Loss (%)', 'ABR (Rs/kWh)', 'Thru Rate (Rs/kWh)', 'Realised Amount (Rs Cr)'
+  ];
+
+  const escapeVal = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const csvLines = [];
+  csvLines.push(`# UPPCL 11KV Feeder Category-wise Performance Summary (${groupLabel})`);
+  csvLines.push(`# Generated: ${new Date().toLocaleString('en-IN')}`);
+  csvLines.push(headers.join(','));
+
+  let totF = 0, totC = 0, totIE = 0, totSE = 0, totAss = 0, totReal = 0;
+  for (const r of rows) {
+    const ll = (100 - r.billingEff).toFixed(2);
+    totF += r.feeders;
+    totC += r.consumers;
+    totIE += r.ie;
+    totSE += r.se;
+    totAss += r.ass;
+    totReal += r.real;
+
+    csvLines.push([
+      escapeVal(r.category),
+      r.feeders || 0,
+      r.consumers || 0,
+      r.inputMu ? r.inputMu.toFixed(2) : 0,
+      r.billedMu ? r.billedMu.toFixed(2) : 0,
+      r.billingEff ? r.billingEff.toFixed(2) : 0,
+      r.collectionEff ? r.collectionEff.toFixed(2) : 0,
+      ll,
+      r.atcLoss ? r.atcLoss.toFixed(2) : 0,
+      r.abr ? r.abr.toFixed(2) : 0,
+      r.thruRate ? r.thruRate.toFixed(2) : 0,
+      r.realisedCr ? r.realisedCr.toFixed(2) : 0
+    ].join(','));
+  }
+
+  // Total row
+  const totBE = totIE > 0 ? (totSE / totIE) * 100 : 0;
+  const totCE = totAss > 0 ? (totReal / totAss) * 100 : (totReal > 0 ? 100 : 0);
+  const totLL = (100 - totBE).toFixed(2);
+  const totATC = 100 - (totBE * totCE / 100);
+  const totABR = totSE > 0 ? (totAss * 100) / totSE : 0;
+  const totTR  = totIE > 0 ? (totReal * 100) / totIE : 0;
+
+  csvLines.push([
+    'Total',
+    totF,
+    totC,
+    (totIE / 1000).toFixed(2),
+    (totSE / 1000).toFixed(2),
+    totBE.toFixed(2),
+    totCE.toFixed(2),
+    totLL,
+    totATC.toFixed(2),
+    totABR.toFixed(2),
+    totTR.toFixed(2),
+    (totReal / 100).toFixed(2)
+  ].join(','));
+
+  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `UPPCL_Category_Performance_Summary_${isArea ? 'Area' : 'FeederType'}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const btnExportCategoryCsv = document.getElementById('btnExportCategoryCsv');
+if (btnExportCategoryCsv) btnExportCategoryCsv.addEventListener('click', exportCategorySummaryCsv);
 
 // ── 6. Export Progressive Summary CSV (WYSIWYG: strictly honors Discom expansion & compression) ──
 function exportProgressiveSummaryCsv() {
