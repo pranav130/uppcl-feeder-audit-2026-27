@@ -299,7 +299,10 @@
 <thead>
 <tr>
 <th class="tx" data-ccol="category">Category <span class="sort-ico">↕</span></th>
-<th class="sorted" data-ccol="consumers">No. of Consumers <span class="sort-ico">▼</span></th>
+<th class="sorted" data-ccol="billableConsumers">Billable Consumers <span class="sort-ico">▼</span></th>
+<th data-ccol="loadKw">Load (kW) <span class="sort-ico">↕</span></th>
+<th data-ccol="billedConsumers">Billed Consumers <span class="sort-ico">↕</span></th>
+<th data-ccol="paidConsumers" title="Last pay date is of current month">Paid Consumers <span class="sort-ico">↕</span></th>
 <th data-ccol="billedMu">Billed Energy (MU) <span class="sort-ico">↕</span></th>
 <th data-ccol="assessmentCr">Assessment (₹ Cr) <span class="sort-ico">↕</span></th>
 <th data-ccol="realisedCr">Realised Amount (₹ Cr) <span class="sort-ico">↕</span></th>
@@ -308,7 +311,7 @@
 </tr>
 </thead>
 <tbody id="byCategoryBody">
-<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--ink-3)">Loading category summary...</td></tr>
+<tr><td colspan="10" style="text-align:center;padding:16px;color:var(--ink-3)">Loading category summary...</td></tr>
 </tbody>
 <tfoot id="byCategoryFoot"></tfoot>
 </table>
@@ -541,5 +544,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261008_2"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261008_3"></script></body>
 </html>
