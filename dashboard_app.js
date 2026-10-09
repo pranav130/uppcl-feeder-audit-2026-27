@@ -892,11 +892,16 @@ window.filterByDiscomName = function(dName) {
   onFilterChanged();
 };
 
-function renderCategoryTable(data) {
-  const tbody = document.getElementById('byCategoryBody');
-  const tfoot = document.getElementById('byCategoryFoot');
-  if (!tbody) return;
+const BASE_DISCOM_FEEDERS = {
+  'ALL': 26033,
+  'PVVNL': 8074,
+  'DVVNL': 6094,
+  'PUVNL': 5579,
+  'MVVNL': 5662,
+  'KESCO': 624
+};
 
+function getActiveCategoryData() {
   // Resolve active discom
   let discKey = 'ALL';
   const selDisc = (state.discom || '').toUpperCase().trim();
@@ -908,23 +913,115 @@ function renderCategoryTable(data) {
     else if (selDisc.includes('KESCO')) discKey = 'KESCO';
   }
 
-  const rawRows = (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM[discKey]) ? CATEGORY_DATA_BY_DISCOM[discKey] : (CATEGORY_DATA_BY_DISCOM['ALL'] || []);
+  const rawRows = (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM[discKey]) 
+    ? CATEGORY_DATA_BY_DISCOM[discKey] 
+    : (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM['ALL'] ? CATEGORY_DATA_BY_DISCOM['ALL'] : []);
 
-  // Clone rows and handle PTW toggle rule
+  if (!rawRows || !rawRows.length) return { discKey, rows: [] };
+
+  // Calculate base totals for this Discom
+  let baseAss = 0, baseMu = 0, baseReal = 0;
+  for (const r of rawRows) {
+    baseAss += (r.assessmentCr || 0);
+    baseMu += (r.billedMu || 0);
+    baseReal += (r.realisedCr || 0);
+  }
+
+  // Active KPI figures from active filters (Discom, Zone, Circle, Division, FeederType, Months, Search, PTW)
+  const kpis = (typeof computedResult !== 'undefined' && computedResult) ? computedResult.kpis : null;
+  const activeAss = kpis ? (kpis.assessmentCr || 0) : baseAss;
+  const activeMu = kpis ? (kpis.soldEnergyMu || 0) : baseMu;
+  const activeReal = kpis ? (kpis.realizationCr || 0) : baseReal;
+  const activeFeeders = kpis ? (kpis.totalFeeders || 0) : (BASE_DISCOM_FEEDERS[discKey] || 26033);
+  const baseFeeders = BASE_DISCOM_FEEDERS[discKey] || 26033;
+
+  if (kpis && (activeFeeders === 0 || (activeAss === 0 && activeMu === 0))) {
+    return { discKey, rows: [] };
+  }
+
+  // Feeder scaling ratio (for consumers and load when hierarchy/geographical filters are active)
+  const feederRatio = baseFeeders > 0 ? Math.min(1.0, activeFeeders / baseFeeders) : 1.0;
+  const scaleAss = baseAss > 0 ? (activeAss / baseAss) : 0;
+  const scaleMu = baseMu > 0 ? (activeMu / baseMu) : 0;
+
+  // Clone rows and scale values
   const rows = rawRows.map(r => {
     const item = { ...r };
     item.desc = (typeof CATEGORY_NAMES !== 'undefined' && CATEGORY_NAMES[item.category]) ? CATEGORY_NAMES[item.category] : '';
-    if (item.category === 'LMV5') {
-      if (state.includePtw) {
-        item.realisedCr = item.assessmentCr;
-        item.collectionEff = 100.0;
-      } else {
-        item.realisedCr = item.baseRealisedCr;
-        item.collectionEff = item.assessmentCr > 0 ? Math.round((item.baseRealisedCr / item.assessmentCr * 100) * 100) / 100 : 0.0;
-      }
-    }
+    item.billableConsumers = Math.round((r.billableConsumers || 0) * feederRatio);
+    item.loadKw = Math.round(((r.loadKw || 0) * feederRatio) * 100) / 100;
+    item.billedConsumers = Math.round((r.billedConsumers || 0) * feederRatio);
+    item.paidConsumers = Math.round((r.paidConsumers || 0) * feederRatio);
+    item.billedMu = Math.round(((r.billedMu || 0) * scaleMu) * 100) / 100;
+    item.assessmentCr = Math.round(((r.assessmentCr || 0) * scaleAss) * 100) / 100;
     return item;
   });
+
+  // Adjust assessment and billedMu rounding diff to ensure exact match with active KPI totals
+  const currentAss = rows.reduce((s, r) => s + r.assessmentCr, 0);
+  const assDiff = Math.round((activeAss - currentAss) * 100) / 100;
+  if (assDiff !== 0 && rows.length > 0) {
+    const topRow = rows.reduce((max, r) => r.assessmentCr > max.assessmentCr ? r : max, rows[0]);
+    topRow.assessmentCr = Math.round((topRow.assessmentCr + assDiff) * 100) / 100;
+  }
+
+  const currentMu = rows.reduce((s, r) => s + r.billedMu, 0);
+  const muDiff = Math.round((activeMu - currentMu) * 100) / 100;
+  if (muDiff !== 0 && rows.length > 0) {
+    const topRow = rows.reduce((max, r) => r.billedMu > max.billedMu ? r : max, rows[0]);
+    topRow.billedMu = Math.round((topRow.billedMu + muDiff) * 100) / 100;
+  }
+
+  // Handle Realisation and PTW
+  const lmv5Row = rows.find(r => r.category === 'LMV5');
+  if (state.includePtw && lmv5Row) {
+    lmv5Row.realisedCr = lmv5Row.assessmentCr;
+    lmv5Row.collectionEff = 100.0;
+    const remReal = Math.max(0.0, Math.round((activeReal - lmv5Row.realisedCr) * 100) / 100);
+    const nonLmv5BaseReal = rawRows.filter(r => r.category !== 'LMV5').reduce((s, r) => s + (r.realisedCr || 0), 0);
+    
+    for (const r of rows) {
+      if (r.category === 'LMV5') continue;
+      const orig = rawRows.find(x => x.category === r.category) || r;
+      r.realisedCr = nonLmv5BaseReal > 0 
+        ? Math.round(((orig.realisedCr || 0) / nonLmv5BaseReal * remReal) * 100) / 100 
+        : 0;
+    }
+    const curReal = rows.reduce((s, r) => s + r.realisedCr, 0);
+    const realDiff = Math.round((activeReal - curReal) * 100) / 100;
+    if (realDiff !== 0) {
+      const topNonLmv5 = rows.filter(r => r.category !== 'LMV5').reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, rows[0]);
+      if (topNonLmv5) topNonLmv5.realisedCr = Math.round((topNonLmv5.realisedCr + realDiff) * 100) / 100;
+    }
+  } else {
+    const scaleReal = baseReal > 0 ? (activeReal / baseReal) : 0;
+    for (const r of rows) {
+      const orig = rawRows.find(x => x.category === r.category) || r;
+      r.realisedCr = Math.round(((orig.realisedCr || 0) * scaleReal) * 100) / 100;
+    }
+    const curReal = rows.reduce((s, r) => s + r.realisedCr, 0);
+    const realDiff = Math.round((activeReal - curReal) * 100) / 100;
+    if (realDiff !== 0 && rows.length > 0) {
+      const topRow = rows.reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, rows[0]);
+      topRow.realisedCr = Math.round((topRow.realisedCr + realDiff) * 100) / 100;
+    }
+  }
+
+  // Calculate ABR and Collection Efficiency for each row
+  for (const r of rows) {
+    r.abr = r.billedMu > 0 ? Math.round(((r.assessmentCr * 10) / r.billedMu) * 100) / 100 : 0;
+    r.collectionEff = r.assessmentCr > 0 ? Math.round(((r.realisedCr / r.assessmentCr) * 100) * 100) / 100 : 0;
+  }
+
+  return { discKey, rows };
+}
+
+function renderCategoryTable(data) {
+  const tbody = document.getElementById('byCategoryBody');
+  const tfoot = document.getElementById('byCategoryFoot');
+  if (!tbody) return;
+
+  const { discKey, rows } = getActiveCategoryData();
 
   let sorted = [...rows];
   if (state.categorySortCol) {
@@ -1711,31 +1808,8 @@ if (btnSummaryCsv) btnSummaryCsv.addEventListener('click', exportExecutiveSummar
 
 // ── Export Category Summary CSV (#btnExportCategoryCsv) ──
 function exportCategorySummaryCsv() {
-  let discKey = 'ALL';
-  const selDisc = (state.discom || '').toUpperCase().trim();
-  if (selDisc) {
-    if (selDisc.includes('DAKSHIN') || selDisc === 'DVVNL') discKey = 'DVVNL';
-    else if (selDisc.includes('PASCHIM') || selDisc === 'PVVNL') discKey = 'PVVNL';
-    else if (selDisc.includes('MADHYA') || selDisc === 'MVVNL') discKey = 'MVVNL';
-    else if (selDisc.includes('POORV') || selDisc.includes('PURV') || selDisc === 'PUVNL' || selDisc === 'PUVVNL') discKey = 'PUVNL';
-    else if (selDisc.includes('KESCO')) discKey = 'KESCO';
-  }
-
-  const rawRows = (typeof CATEGORY_DATA_BY_DISCOM !== 'undefined' && CATEGORY_DATA_BY_DISCOM[discKey]) ? CATEGORY_DATA_BY_DISCOM[discKey] : (CATEGORY_DATA_BY_DISCOM['ALL'] || []);
-  const rows = rawRows.map(r => {
-    const item = { ...r };
-    item.desc = (typeof CATEGORY_NAMES !== 'undefined' && CATEGORY_NAMES[item.category]) ? CATEGORY_NAMES[item.category] : '';
-    if (item.category === 'LMV5') {
-      if (state.includePtw) {
-        item.realisedCr = item.assessmentCr;
-        item.collectionEff = 100.0;
-      } else {
-        item.realisedCr = item.baseRealisedCr;
-        item.collectionEff = item.assessmentCr > 0 ? Math.round((item.baseRealisedCr / item.assessmentCr * 100) * 100) / 100 : 0.0;
-      }
-    }
-    return item;
-  });
+  const { discKey, rows } = getActiveCategoryData();
+  if (!rows || !rows.length) return;
 
   const headers = [
     'Category', 'Description', 'Billable Consumers', 'Sanctioned Load (kW)',
@@ -1752,6 +1826,7 @@ function exportCategorySummaryCsv() {
 
   const csvLines = [];
   csvLines.push(`# UPPCL Category-wise Performance Summary (Scope: ${discKey})`);
+  csvLines.push(`# Period: ${state.monthFrom} to ${state.monthTo}`);
   csvLines.push(`# Generated: ${new Date().toLocaleString('en-IN')}`);
   csvLines.push(headers.join(','));
 
@@ -1798,11 +1873,11 @@ function exportCategorySummaryCsv() {
     totCe.toFixed(2)
   ].join(','));
 
-  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `UPPCL_Category_Performance_Summary_${discKey}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `UPPCL_Category_Performance_${discKey}_${state.monthFrom}_${state.monthTo}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
