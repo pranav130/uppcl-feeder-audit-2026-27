@@ -1,15 +1,81 @@
 
-function updatePtwBadge(isIncluded) {
+function updateAuditBadges() {
   const ptwBadge = document.getElementById('ptwStatusBadge');
-  if (!ptwBadge) return;
-  if (isIncluded) {
-    ptwBadge.textContent = 'PTW Status: INCLUDED';
-    ptwBadge.className = 'tag-badge ptw-on';
-  } else {
-    ptwBadge.textContent = 'PTW Status: EXCLUDED';
-    ptwBadge.className = 'tag-badge ptw-off';
+  if (ptwBadge) {
+    if (state.includePtw) {
+      ptwBadge.textContent = 'PTW Status: INCLUDED';
+      ptwBadge.className = 'tag-badge ptw-on';
+    } else {
+      ptwBadge.textContent = 'PTW Status: EXCLUDED';
+      ptwBadge.className = 'tag-badge ptw-off';
+    }
+  }
+
+  const govtBadge = document.getElementById('govtStatusBadge');
+  if (govtBadge) {
+    if (state.includeGovt) {
+      govtBadge.textContent = 'Govt: DEEMED (100%)';
+      govtBadge.className = 'tag-badge ptw-on';
+    } else {
+      govtBadge.textContent = 'Govt: CASH ONLY';
+      govtBadge.className = 'tag-badge ptw-off';
+    }
+  }
+
+  const cdfBadge = document.getElementById('cdfStatusBadge');
+  if (cdfBadge) {
+    if (state.excludeCdf) {
+      cdfBadge.textContent = 'CDF: EXCLUDED';
+      cdfBadge.className = 'tag-badge ptw-on';
+    } else {
+      cdfBadge.textContent = 'CDF: INCLUDED';
+      cdfBadge.className = 'tag-badge ptw-off';
+    }
+  }
+
+  const subBadge = document.getElementById('subsidyStatusBadge');
+  if (subBadge) {
+    if (state.includeSubsidy) {
+      subBadge.textContent = 'Subsidy: INCLUDED';
+      subBadge.className = 'tag-badge ptw-on';
+    } else {
+      subBadge.textContent = 'Subsidy: EXCLUDED';
+      subBadge.className = 'tag-badge ptw-off';
+    }
   }
 }
+
+function updatePtwBadge(isIncluded) {
+  if (typeof state !== 'undefined') state.includePtw = isIncluded;
+  updateAuditBadges();
+}
+window.updateAuditBadges = updateAuditBadges;
+window.updatePtwBadge = updatePtwBadge;
+
+window.onFilterOptionChanged = function(el) {
+  if (!el) return;
+  const id = el.id;
+  const checked = el.checked;
+  if (id === 'chkIncludePtw') {
+    state.includePtw = checked;
+  } else if (id === 'chkIncludeGovt') {
+    state.includeGovt = checked;
+  } else if (id === 'chkExcludeCdf') {
+    state.excludeCdf = checked;
+  } else if (id === 'chkIncludeSubsidy') {
+    state.includeSubsidy = checked;
+  } else if (id === 'chkAbnormal') {
+    state.excludeAbnormal = checked;
+  } else if (id === 'chkBilledGtInput') {
+    state.excludeBilledGtInput = checked;
+  } else if (id === 'chkZeroInput') {
+    state.excludeZeroInput = checked;
+  }
+  updateAuditBadges();
+  if (typeof onFilterChanged === 'function') {
+    onFilterChanged();
+  }
+};
 
 /* ═══════════════════════════════════════════════════════════════
    UPPCL 11KV Feeder PSR Dashboard · Unified Reactive Engine
@@ -370,6 +436,24 @@ function syncCascadeDropdowns() {
 // ── Core In-Memory Calculator ──
 function calculateMetrics() {
   if (!N || !R) return null;
+
+  // Sync state from DOM controls to guarantee zero mismatch
+  if (typeof document !== 'undefined') {
+    const cGovt = document.getElementById('chkIncludeGovt');
+    if (cGovt) state.includeGovt = cGovt.checked;
+    const cCdf = document.getElementById('chkExcludeCdf');
+    if (cCdf) state.excludeCdf = cCdf.checked;
+    const cSub = document.getElementById('chkIncludeSubsidy');
+    if (cSub) state.includeSubsidy = cSub.checked;
+    const cPtw = document.getElementById('chkIncludePtw');
+    if (cPtw) state.includePtw = cPtw.checked;
+    const cAbn = document.getElementById('chkAbnormal');
+    if (cAbn) state.excludeAbnormal = cAbn.checked;
+    const cBgt = document.getElementById('chkBilledGtInput');
+    if (cBgt) state.excludeBilledGtInput = cBgt.checked;
+    const cZero = document.getElementById('chkZeroInput');
+    if (cZero) state.excludeZeroInput = cZero.checked;
+  }
 
   const targetDiscomIdx = state.discom ? N.Discom.findIndex(d => {
     const norm = normalizeDiscom(state.discom);
@@ -1415,10 +1499,10 @@ function renderChips() {
   if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
   if (state.excludeBilledGtInput) chips.push({ label: 'Excl: Billed > Input', clear: () => { state.excludeBilledGtInput = false; document.getElementById('chkBilledGtInput').checked = false; onFilterChanged(); } });
   if (state.excludeZeroInput) chips.push({ label: 'Excl: Zero Input', clear: () => { state.excludeZeroInput = false; document.getElementById('chkZeroInput').checked = false; onFilterChanged(); } });
-  if (state.excludeCdf) chips.push({ label: 'Excl: CDF Bills', clear: () => { state.excludeCdf = false; const c = document.getElementById('chkExcludeCdf'); if (c) c.checked = false; onFilterChanged(); } });
-  if (state.includePtw) chips.push({ label: 'PTW: Included', clear: () => { state.includePtw = false; const c = document.getElementById('chkIncludePtw'); if (c) c.checked = false; updatePtwBadge(false); onFilterChanged(); } });
-  if (!state.includeGovt) chips.push({ label: 'Govt Deemed: Excluded (Cash Only)', clear: () => { state.includeGovt = true; const c = document.getElementById('chkIncludeGovt'); if (c) c.checked = true; onFilterChanged(); } });
-  if (state.includeSubsidy) chips.push({ label: 'State Subsidy: Included', clear: () => { state.includeSubsidy = false; const c = document.getElementById('chkIncludeSubsidy'); if (c) c.checked = false; onFilterChanged(); } });
+  if (state.excludeCdf) chips.push({ label: 'Excl: CDF Bills', clear: () => { state.excludeCdf = false; const c = document.getElementById('chkExcludeCdf'); if (c) c.checked = false; updateAuditBadges(); onFilterChanged(); } });
+  if (state.includePtw) chips.push({ label: 'PTW: Included', clear: () => { state.includePtw = false; const c = document.getElementById('chkIncludePtw'); if (c) c.checked = false; updateAuditBadges(); onFilterChanged(); } });
+  if (!state.includeGovt) chips.push({ label: 'Govt Deemed: Excluded (Cash Only)', clear: () => { state.includeGovt = true; const c = document.getElementById('chkIncludeGovt'); if (c) c.checked = true; updateAuditBadges(); onFilterChanged(); } });
+  if (state.includeSubsidy) chips.push({ label: 'State Subsidy: Included', clear: () => { state.includeSubsidy = false; const c = document.getElementById('chkIncludeSubsidy'); if (c) c.checked = false; updateAuditBadges(); onFilterChanged(); } });
 
   chipContainer.innerHTML = chips.map((c, i) => `
     <div class="chip">
@@ -1440,6 +1524,7 @@ window.removeChip = function(index) {
 
 // ── Master Filter Trigger Function ──
 function onFilterChanged() {
+  updateAuditBadges();
   renderChips();
   computedResult = calculateMetrics();
   if (!computedResult) return;
@@ -1683,7 +1768,7 @@ function resetFilters() {
   const cGovt = document.getElementById('chkIncludeGovt'); if (cGovt) cGovt.checked = true;
   const cCdf = document.getElementById('chkExcludeCdf'); if (cCdf) cCdf.checked = false;
   const cSub = document.getElementById('chkIncludeSubsidy'); if (cSub) cSub.checked = false;
-  updatePtwBadge(false);
+  updateAuditBadges();
 
   // Reset visual sort header states
   document.querySelectorAll('th.sorted').forEach(t => t.classList.remove('sorted'));

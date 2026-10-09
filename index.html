@@ -48,6 +48,9 @@
 <div class="status-bar" id="statusBar">
 <div class="status-tags">
 <span class="tag-badge ptw-off" id="ptwStatusBadge">PTW Status: EXCLUDED</span>
+<span class="tag-badge ptw-on" id="govtStatusBadge">Govt: DEEMED (100%)</span>
+<span class="tag-badge ptw-off" id="cdfStatusBadge">CDF: INCLUDED</span>
+<span class="tag-badge ptw-off" id="subsidyStatusBadge">Subsidy: EXCLUDED</span>
 <span class="tag-badge">Data Period: April 2026 – August 2026</span>
 <span class="tag-badge">Financial Year: FY 2026-27</span>
 </div>
@@ -137,29 +140,29 @@
 <div class="leave-out-bar">
 <span class="leave-out-title">Leave out feeders with:</span>
 <label class="checkbox-group" title="Exclude feeders where assessment &gt; ₹1 Crore AND billing rate &gt; ₹50/kWh">
-<input id="chkAbnormal" type="checkbox"/> Abnormal Assessment
+<input id="chkAbnormal" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Abnormal Assessment
       </label>
 <label class="checkbox-group" title="Exclude feeders where Billed Energy exceeds Input Energy (negative line loss)">
-<input id="chkBilledGtInput" type="checkbox"/> Billed &gt; Input
+<input id="chkBilledGtInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Billed &gt; Input
       </label>
 <label class="checkbox-group" title="Exclude feeders with zero input energy in month">
-<input id="chkZeroInput" type="checkbox"/> A Month with Zero Input
+<input id="chkZeroInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> A Month with Zero Input
       </label>
 
 <label class="checkbox-group" title="Include PTW Connections (Agricultural PTW: Assessment credited to Realization)">
-<input id="chkIncludePtw" type="checkbox"/>
+<input id="chkIncludePtw" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
 <span>Include PTW Connections</span>
 </label>
 <label class="checkbox-group" title="Government Connections: Assessment = Realization (deemed credit). When unchecked, only actual cash payments are counted.">
-<input id="chkIncludeGovt" type="checkbox" checked/>
+<input id="chkIncludeGovt" type="checkbox" checked onchange="window.onFilterOptionChanged(this)"/>
 <span>Include Govt Connections</span>
 </label>
 <label class="checkbox-group" title="Exclude CDF (Defective/Change-of-Defective) bills &amp; consumption/assessment outliers (&gt;1500 u/kW or &gt;₹10,000/kW)">
-<input id="chkExcludeCdf" type="checkbox"/>
+<input id="chkExcludeCdf" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
 <span>Exclude CDF Bills</span>
 </label>
 <label class="checkbox-group" title="Include State Government Tariff and Powerloom Subsidies in Realization">
-<input id="chkIncludeSubsidy" type="checkbox"/>
+<input id="chkIncludeSubsidy" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
 <span>Include State Subsidy</span>
 </label>
 </div>
@@ -556,5 +559,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261009_3"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261009_152000"></script></body>
 </html>
