@@ -146,9 +146,21 @@
 <input id="chkZeroInput" type="checkbox"/> A Month with Zero Input
       </label>
 
-<label class="checkbox-group" title="Include PTW Connections">
+<label class="checkbox-group" title="Include PTW Connections (Agricultural PTW: Assessment credited to Realization)">
 <input id="chkIncludePtw" type="checkbox"/>
 <span>Include PTW Connections</span>
+</label>
+<label class="checkbox-group" title="Government Connections: Assessment = Realization (deemed credit). When unchecked, only actual cash payments are counted.">
+<input id="chkIncludeGovt" type="checkbox" checked/>
+<span>Include Govt Connections</span>
+</label>
+<label class="checkbox-group" title="Exclude CDF (Defective/Change-of-Defective) bills &amp; consumption/assessment outliers (&gt;1500 u/kW or &gt;₹10,000/kW)">
+<input id="chkExcludeCdf" type="checkbox"/>
+<span>Exclude CDF Bills</span>
+</label>
+<label class="checkbox-group" title="Include State Government Tariff and Powerloom Subsidies in Realization">
+<input id="chkIncludeSubsidy" type="checkbox"/>
+<span>Include State Subsidy</span>
 </label>
 </div>
 </section>

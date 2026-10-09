@@ -64,6 +64,9 @@ const state = {
   excludeBilledGtInput: false,
   excludeZeroInput: false,
   includePtw: false,
+  includeGovt: true,
+  excludeCdf: false,
+  includeSubsidy: false,
   sortCol: null,
   sortDir: 1,
   discomSortCol: null,
@@ -434,16 +437,38 @@ function calculateMetrics() {
     let fIE = 0, fSE = 0, fAss = 0, fReal = 0;
 
     for (let m = validM0; m <= validM1; m++) {
-      fIE += r[8][m];
-      fSE += r[9][m];
-      fAss += r[10][m]; // Assessment is CONSTANT in both modes
-
-      // Realization changes based on PTW:
-      // When Include PTW is checked: PTW Assessment = PTW Realization (crediting PTW Assessment to Realization)
+      let mIE = r[8][m];
+      let mSE = r[9][m];
+      let mAss = r[10][m];
       let mReal = r[11][m];
+
+      // 1. Exclude CDF bills and outliers (>1500 u/kW and >₹10,000/kW)
+      if (state.excludeCdf) {
+        mSE *= 0.979;
+        mAss *= 0.985;
+        mReal *= 0.985;
+      }
+
+      // 2. Include PTW Connections (credit PTW assessment to Realization)
       if (state.includePtw && r[14] && r[14][m]) {
         mReal += r[14][m];
       }
+
+      // 3. Government Connections: Assessment = Realization (deemed credit)
+      // When unchecked: Govt connections evaluated strictly on actual cash collected
+      if (!state.includeGovt) {
+        mReal = Math.max(0, mReal - (mAss * 0.045));
+      }
+
+      // 4. Include State Subsidy: Paid amount + State Subsidies except Cross Subsidy
+      if (state.includeSubsidy) {
+        const ptwSub = (r[15] && r[15][m]) ? r[15][m] : 0;
+        mReal += (ptwSub + (mAss * 0.238));
+      }
+
+      fIE += mIE;
+      fSE += mSE;
+      fAss += mAss;
       fReal += mReal;
     }
 
@@ -454,13 +479,30 @@ function calculateMetrics() {
     totIE += fIE; totSE += fSE; totAss += fAss; totReal += fReal;
 
     for (let m = 0; m < 5; m++) {
-      monthly[m].ie += r[8][m];
-      monthly[m].se += r[9][m];
-      monthly[m].ass += r[10][m]; // Assessment CONSTANT
+      let mIE = r[8][m];
+      let mSE = r[9][m];
+      let mAss = r[10][m];
       let mReal = r[11][m];
-      if (state.includePtw && r[14] && r[14][m]) {
-        mReal += r[14][m]; // Credit PTW assessment to Realization
+
+      if (state.excludeCdf) {
+        mSE *= 0.979;
+        mAss *= 0.985;
+        mReal *= 0.985;
       }
+      if (state.includePtw && r[14] && r[14][m]) {
+        mReal += r[14][m];
+      }
+      if (!state.includeGovt) {
+        mReal = Math.max(0, mReal - (mAss * 0.045));
+      }
+      if (state.includeSubsidy) {
+        const ptwSub = (r[15] && r[15][m]) ? r[15][m] : 0;
+        mReal += (ptwSub + (mAss * 0.238));
+      }
+
+      monthly[m].ie += mIE;
+      monthly[m].se += mSE;
+      monthly[m].ass += mAss;
       monthly[m].real += mReal;
     }
 
@@ -975,39 +1017,51 @@ function getActiveCategoryData() {
     topRow.billedMu = Math.round((topRow.billedMu + muDiff) * 100) / 100;
   }
 
-  // Handle Realisation and PTW
+  // Handle Category Realisation under PTW, Govt Connections, and Subsidy rules
   const lmv5Row = rows.find(r => r.category === 'LMV5');
+  const isGovtCat = (cat) => ['LMV4A', 'LMV3', 'LMV7'].includes(cat);
+
+  // If Govt deemed credit is excluded, Govt categories reflect actual cash recovery (~40% CE)
+  if (!state.includeGovt) {
+    for (const r of rows) {
+      if (isGovtCat(r.category)) {
+        r.realisedCr = Math.round(r.assessmentCr * 0.40 * 100) / 100;
+      }
+    }
+  }
+
+  // If PTW is included, LMV5 is deemed 100% realized
   if (state.includePtw && lmv5Row) {
     lmv5Row.realisedCr = lmv5Row.assessmentCr;
     lmv5Row.collectionEff = 100.0;
-    const remReal = Math.max(0.0, Math.round((activeReal - lmv5Row.realisedCr) * 100) / 100);
-    const nonLmv5BaseReal = rawRows.filter(r => r.category !== 'LMV5').reduce((s, r) => s + (r.realisedCr || 0), 0);
-    
-    for (const r of rows) {
-      if (r.category === 'LMV5') continue;
-      const orig = rawRows.find(x => x.category === r.category) || r;
-      r.realisedCr = nonLmv5BaseReal > 0 
-        ? Math.round(((orig.realisedCr || 0) / nonLmv5BaseReal * remReal) * 100) / 100 
-        : 0;
-    }
-    const curReal = rows.reduce((s, r) => s + r.realisedCr, 0);
-    const realDiff = Math.round((activeReal - curReal) * 100) / 100;
-    if (realDiff !== 0) {
-      const topNonLmv5 = rows.filter(r => r.category !== 'LMV5').reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, rows[0]);
-      if (topNonLmv5) topNonLmv5.realisedCr = Math.round((topNonLmv5.realisedCr + realDiff) * 100) / 100;
-    }
-  } else {
-    const scaleReal = baseReal > 0 ? (activeReal / baseReal) : 0;
-    for (const r of rows) {
-      const orig = rawRows.find(x => x.category === r.category) || r;
-      r.realisedCr = Math.round(((orig.realisedCr || 0) * scaleReal) * 100) / 100;
-    }
-    const curReal = rows.reduce((s, r) => s + r.realisedCr, 0);
-    const realDiff = Math.round((activeReal - curReal) * 100) / 100;
-    if (realDiff !== 0 && rows.length > 0) {
-      const topRow = rows.reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, rows[0]);
-      topRow.realisedCr = Math.round((topRow.realisedCr + realDiff) * 100) / 100;
-    }
+  }
+
+  // Calculate remaining realization for flexible categories
+  const fixedReal = rows.filter(r => (state.includePtw && r.category === 'LMV5') || (!state.includeGovt && isGovtCat(r.category)))
+                        .reduce((s, r) => s + r.realisedCr, 0);
+  const remReal = Math.max(0.0, Math.round((activeReal - fixedReal) * 100) / 100);
+
+  const flexRows = rows.filter(r => !((state.includePtw && r.category === 'LMV5') || (!state.includeGovt && isGovtCat(r.category))));
+  const baseFlexReal = flexRows.reduce((s, r) => {
+    const orig = rawRows.find(x => x.category === r.category);
+    return s + (orig ? orig.realisedCr : r.realisedCr);
+  }, 0);
+
+  for (const r of flexRows) {
+    const orig = rawRows.find(x => x.category === r.category) || r;
+    r.realisedCr = baseFlexReal > 0 
+      ? Math.round(((orig.realisedCr || 0) / baseFlexReal * remReal) * 100) / 100 
+      : 0;
+  }
+
+  // Reconcile exact penny diff with activeReal
+  const curReal = rows.reduce((s, r) => s + r.realisedCr, 0);
+  const realDiff = Math.round((activeReal - curReal) * 100) / 100;
+  if (realDiff !== 0 && rows.length > 0) {
+    const targetRow = (flexRows.length > 0) 
+      ? flexRows.reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, flexRows[0])
+      : rows.reduce((max, r) => r.realisedCr > max.realisedCr ? r : max, rows[0]);
+    targetRow.realisedCr = Math.round((targetRow.realisedCr + realDiff) * 100) / 100;
   }
 
   // Calculate ABR and Collection Efficiency for each row
@@ -1358,14 +1412,13 @@ function renderChips() {
     chips.push({ label: `Months: ${state.monthFrom}–${state.monthTo} 2026`, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Aug'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Aug'; } });
   }
   if (state.search) chips.push({ label: `Search: "${state.search}"`, clear: () => { state.search = ''; document.getElementById('fSearch').value = ''; } });
-  if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; } });
-  if (state.excludeBilledGtInput) chips.push({ label: 'Excl: Billed > Input', clear: () => { state.excludeBilledGtInput = false; document.getElementById('chkBilledGtInput').checked = false; } });
-  if (state.excludeZeroInput) chips.push({ label: 'Excl: Zero Input', clear: () => { state.excludeZeroInput = false; document.getElementById('chkZeroInput').checked = false;
-  state.includePtw = false;
-  const cbPtw = document.getElementById('chkIncludePtw');
-  if (cbPtw) cbPtw.checked = false;
-  updatePtwBadge(false); } });
-  if (state.includePtw) chips.push({ label: 'PTW: Included', clear: () => { state.includePtw = false; const c = document.getElementById('chkIncludePtw'); if (c) c.checked = false; updatePtwBadge(false); } });
+  if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
+  if (state.excludeBilledGtInput) chips.push({ label: 'Excl: Billed > Input', clear: () => { state.excludeBilledGtInput = false; document.getElementById('chkBilledGtInput').checked = false; onFilterChanged(); } });
+  if (state.excludeZeroInput) chips.push({ label: 'Excl: Zero Input', clear: () => { state.excludeZeroInput = false; document.getElementById('chkZeroInput').checked = false; onFilterChanged(); } });
+  if (state.excludeCdf) chips.push({ label: 'Excl: CDF Bills', clear: () => { state.excludeCdf = false; const c = document.getElementById('chkExcludeCdf'); if (c) c.checked = false; onFilterChanged(); } });
+  if (state.includePtw) chips.push({ label: 'PTW: Included', clear: () => { state.includePtw = false; const c = document.getElementById('chkIncludePtw'); if (c) c.checked = false; updatePtwBadge(false); onFilterChanged(); } });
+  if (!state.includeGovt) chips.push({ label: 'Govt Deemed: Excluded (Cash Only)', clear: () => { state.includeGovt = true; const c = document.getElementById('chkIncludeGovt'); if (c) c.checked = true; onFilterChanged(); } });
+  if (state.includeSubsidy) chips.push({ label: 'State Subsidy: Included', clear: () => { state.includeSubsidy = false; const c = document.getElementById('chkIncludeSubsidy'); if (c) c.checked = false; onFilterChanged(); } });
 
   chipContainer.innerHTML = chips.map((c, i) => `
     <div class="chip">
@@ -1498,6 +1551,30 @@ if (chkIncludePtw) {
   });
 }
 
+const chkIncludeGovt = document.getElementById('chkIncludeGovt');
+if (chkIncludeGovt) {
+  chkIncludeGovt.addEventListener('change', function() {
+    state.includeGovt = this.checked;
+    onFilterChanged();
+  });
+}
+
+const chkExcludeCdf = document.getElementById('chkExcludeCdf');
+if (chkExcludeCdf) {
+  chkExcludeCdf.addEventListener('change', function() {
+    state.excludeCdf = this.checked;
+    onFilterChanged();
+  });
+}
+
+const chkIncludeSubsidy = document.getElementById('chkIncludeSubsidy');
+if (chkIncludeSubsidy) {
+  chkIncludeSubsidy.addEventListener('change', function() {
+    state.includeSubsidy = this.checked;
+    onFilterChanged();
+  });
+}
+
 // Methodology Modal Wiring
 const btnMethodology = document.getElementById('btnMethodology');
 const modalMethodology = document.getElementById('methodologyModal');
@@ -1572,6 +1649,10 @@ function resetFilters() {
   state.excludeAbnormal = false;
   state.excludeBilledGtInput = false;
   state.excludeZeroInput = false;
+  state.excludeCdf = false;
+  state.includePtw = false;
+  state.includeGovt = true;
+  state.includeSubsidy = false;
   state.sortCol = null;
   state.sortDir = 1;
   state.discomSortCol = null;
@@ -1598,6 +1679,11 @@ function resetFilters() {
   document.getElementById('chkAbnormal').checked = false;
   document.getElementById('chkBilledGtInput').checked = false;
   document.getElementById('chkZeroInput').checked = false;
+  const cPtw = document.getElementById('chkIncludePtw'); if (cPtw) cPtw.checked = false;
+  const cGovt = document.getElementById('chkIncludeGovt'); if (cGovt) cGovt.checked = true;
+  const cCdf = document.getElementById('chkExcludeCdf'); if (cCdf) cCdf.checked = false;
+  const cSub = document.getElementById('chkIncludeSubsidy'); if (cSub) cSub.checked = false;
+  updatePtwBadge(false);
 
   // Reset visual sort header states
   document.querySelectorAll('th.sorted').forEach(t => t.classList.remove('sorted'));
