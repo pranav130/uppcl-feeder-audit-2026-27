@@ -1030,6 +1030,23 @@ const BASE_DISCOM_FEEDERS = {
   'KESCO': 624
 };
 
+// Discom-wise monthly billable consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug]
+// Derived from 11KV Feeder Audit Master Workbook (AUDIT DATA cols 30-34)
+const DISCOM_MONTHLY_BILLABLE_RATIOS = {
+  'PVVNL': [0.99818, 0.99865, 0.99872, 0.98544, 1.0],
+  'DVVNL': [0.97553, 0.97914, 0.98286, 0.98164, 1.0],
+  'PUVNL': [0.99724, 0.99762, 0.99730, 0.98445, 1.0],
+  'MVVNL': [0.99232, 0.99313, 0.99480, 0.97293, 1.0],
+  'KESCO': [1.00376, 1.00287, 1.00200, 0.89090, 1.0],
+  'ALL':   [0.99226, 0.99334, 0.99438, 0.97939, 1.0]
+};
+
+// Monthly billed consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug]
+const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.98215, 1.0];
+
+// Fallback monthly paid consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug]
+const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0];
+
 function getActiveCategoryData() {
   // Resolve active discom
   let discKey = 'ALL';
@@ -1073,14 +1090,29 @@ function getActiveCategoryData() {
   const scaleAss = baseAss > 0 ? (activeAss / baseAss) : 0;
   const scaleMu = baseMu > 0 ? (activeMu / baseMu) : 0;
 
+  // Monthly snapshot scaling for selected "To" month (Apr=0, May=1, Jun=2, Jul=3, Aug=4)
+  const mTo = (typeof MON_INDEX !== 'undefined' && MON_INDEX[state.monthTo] !== undefined) ? MON_INDEX[state.monthTo] : 4;
+  const billableRatios = DISCOM_MONTHLY_BILLABLE_RATIOS[discKey] || DISCOM_MONTHLY_BILLABLE_RATIOS['ALL'];
+  const monthBillableRatio = billableRatios[mTo] ?? 1.0;
+  const monthBilledRatio = MONTHLY_BILLED_RATIOS[mTo] ?? 1.0;
+
+  let monthPaidRatio = MONTHLY_PAID_RATIOS[mTo] ?? 1.0;
+  if (computedResult && computedResult.monthly && computedResult.monthly[4] && computedResult.monthly[4].real > 0 && computedResult.monthly[mTo]) {
+    monthPaidRatio = computedResult.monthly[mTo].real / computedResult.monthly[4].real;
+  }
+
+  const finalBillableRatio = feederRatio * monthBillableRatio;
+  const finalBilledRatio = feederRatio * monthBilledRatio;
+  const finalPaidRatio = feederRatio * monthPaidRatio;
+
   // Clone rows and scale values
   const rows = rawRows.map(r => {
     const item = { ...r };
     item.desc = (typeof CATEGORY_NAMES !== 'undefined' && CATEGORY_NAMES[item.category]) ? CATEGORY_NAMES[item.category] : '';
-    item.billableConsumers = Math.round((r.billableConsumers || 0) * feederRatio);
-    item.loadKw = Math.round(((r.loadKw || 0) * feederRatio) * 100) / 100;
-    item.billedConsumers = Math.round((r.billedConsumers || 0) * feederRatio);
-    item.paidConsumers = Math.round((r.paidConsumers || 0) * feederRatio);
+    item.billableConsumers = Math.round((r.billableConsumers || 0) * finalBillableRatio);
+    item.loadKw = Math.round(((r.loadKw || 0) * finalBillableRatio) * 100) / 100;
+    item.billedConsumers = Math.round((r.billedConsumers || 0) * finalBilledRatio);
+    item.paidConsumers = Math.round((r.paidConsumers || 0) * finalPaidRatio);
     item.billedMu = Math.round(((r.billedMu || 0) * scaleMu) * 100) / 100;
     item.assessmentCr = Math.round(((r.assessmentCr || 0) * scaleAss) * 100) / 100;
     return item;
@@ -1161,6 +1193,11 @@ function renderCategoryTable(data) {
   const tbody = document.getElementById('byCategoryBody');
   const tfoot = document.getElementById('byCategoryFoot');
   if (!tbody) return;
+
+  const hintEl = document.getElementById('catTableHint');
+  if (hintEl) {
+    hintEl.innerHTML = `Tariff Category-wise breakdown from clean.supply_type_category · <b>Consumers &amp; Load snapshot as of ${state.monthTo} 2026</b>`;
+  }
 
   const { discKey, rows } = getActiveCategoryData();
 
@@ -2000,7 +2037,7 @@ function exportCategorySummaryCsv() {
 
   const csvLines = [];
   csvLines.push(`# UPPCL Category-wise Performance Summary (Scope: ${discKey})`);
-  csvLines.push(`# Period: ${state.monthFrom} to ${state.monthTo}`);
+  csvLines.push(`# Period: ${state.monthFrom} to ${state.monthTo} 2026 (Consumers & Load snapshot as of ${state.monthTo} 2026)`);
   csvLines.push(`# Generated: ${new Date().toLocaleString('en-IN')}`);
   csvLines.push(headers.join(','));
 
