@@ -428,7 +428,6 @@ function calculateMetrics() {
     totalScoped++;
 
     const flags = r[13];
-    if (state.excludeAbnormal && (flags & 1)) continue;
     if (state.excludeBilledGtInput && (flags & 2)) continue;
     if (state.excludeZeroInput && (flags & 4)) continue;
 
@@ -447,6 +446,10 @@ function calculateMetrics() {
       }
       fReal += mReal;
     }
+
+    // Exclude abnormal assessment: ABR > ₹50/kWh OR assessment > ₹100 Lakhs (₹1 Crore) with 0 sold energy
+    const feederAbr = fSE > 0 ? (fAss * 100) / fSE : 0;
+    if (state.excludeAbnormal && (feederAbr > 50 || (fAss > 100 && fSE <= 0))) continue;
 
     totIE += fIE; totSE += fSE; totAss += fAss; totReal += fReal;
 
