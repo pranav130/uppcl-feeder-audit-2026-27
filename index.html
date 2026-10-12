@@ -23,7 +23,7 @@
   }
 })();
 </script>
-<link href="styles.css" rel="stylesheet"/>
+<link href="styles.css?v=20261012_130000" rel="stylesheet"/>
 </head>
 <body>
 <div class="wrap">
@@ -171,7 +171,7 @@
 <!-- ── HEADLINE KPI CARDS ── -->
 <section aria-label="Headline KPIs">
 <!-- Row 1 -->
-<div class="kpis">
+<div class="kpis kpis-5">
 <div class="kpi" style="--kpi-col: var(--s1)">
 <span class="lab">Input Energy</span>
 <span class="v" id="kpiIE">—</span>
@@ -182,11 +182,24 @@
 <span class="v" id="kpiSE">—</span>
 <span class="u">MU (Million Units)</span>
 </div>
+<div class="kpi" style="--kpi-col: var(--s3)">
+<span class="lab">Amount Assessed</span>
+<span class="v" id="kpiAss">—</span>
+<span class="u">₹ Crore</span>
+</div>
+<div class="kpi" style="--kpi-col: var(--s2)">
+<span class="lab">Amount Realised</span>
+<span class="v" id="kpiReal">—</span>
+<span class="u">₹ Crore</span>
+</div>
 <div class="kpi" style="--kpi-col: var(--good)">
 <span class="lab">Billing Efficiency</span>
 <span class="v" id="kpiBE">—</span>
 <span class="u">% (Sold ÷ Input)</span>
 </div>
+</div>
+<!-- Row 2 -->
+<div class="kpis kpis-5" style="margin-top: 10px;">
 <div class="kpi" style="--kpi-col: var(--s3)">
 <span class="lab">Collection Efficiency</span>
 <span class="v" id="kpiCE">—</span>
@@ -202,9 +215,6 @@
 <span class="v" id="kpiATC" style="color:var(--crit)">—</span>
 <span class="u">% [1 − (BE × CE)]</span>
 </div>
-</div>
-<!-- Row 2 -->
-<div class="kpis kpis-5" style="margin-top: 10px;">
 <div class="kpi" style="--kpi-col: var(--accent)">
 <span class="lab">Average Billing Rate</span>
 <span class="v" id="kpiABR">—</span>
@@ -214,21 +224,6 @@
 <span class="lab">Thru Rate</span>
 <span class="v" id="kpiThru" style="color:var(--good)">—</span>
 <span class="u">₹ / kWh (Realised ÷ Input)</span>
-</div>
-<div class="kpi" style="--kpi-col: var(--warn)">
-<span class="lab">Loss Per Unit Input</span>
-<span class="v" id="kpiLossPerUnit" style="color:var(--warn)">—</span>
-<span class="u">₹ / kWh Input</span>
-</div>
-<div class="kpi" style="--kpi-col: var(--s3)">
-<span class="lab">Amount Assessed</span>
-<span class="v" id="kpiAss">—</span>
-<span class="u">₹ Crore</span>
-</div>
-<div class="kpi" style="--kpi-col: var(--s2)">
-<span class="lab">Amount Realised</span>
-<span class="v" id="kpiReal">—</span>
-<span class="u">₹ Crore</span>
 </div>
 </div>
 <!-- Baseline Network Sub-strip -->
@@ -313,16 +308,16 @@
 <table id="tblByCategory">
 <thead>
 <tr>
-<th class="tx" data-ccol="category">Category <span class="sort-ico">↕</span></th>
-<th class="sorted" data-ccol="billableConsumers">Billable Consumers <span class="sort-ico">▼</span></th>
-<th data-ccol="loadKw">Load (kW) <span class="sort-ico">↕</span></th>
-<th data-ccol="billedConsumers">Billed Consumers <span class="sort-ico">↕</span></th>
-<th data-ccol="paidConsumers" title="Last pay date is of current month">Paid Consumers <span class="sort-ico">↕</span></th>
-<th data-ccol="billedMu">Billed Energy (MU) <span class="sort-ico">↕</span></th>
-<th data-ccol="assessmentCr">Assessment (₹ Cr) <span class="sort-ico">↕</span></th>
-<th data-ccol="realisedCr">Realised Amount (₹ Cr) <span class="sort-ico">↕</span></th>
-<th data-ccol="abr">Average Billing Rate (₹/kWh) <span class="sort-ico">↕</span></th>
-<th data-ccol="collectionEff">Collection Efficiency (%) <span class="sort-ico">↕</span></th>
+<th class="tx" data-ccol="category" title="Tariff Supply Category">Category <span class="sort-ico">↕</span></th>
+<th class="sorted" data-ccol="billableConsumers" title="Billable Consumers">Billable Cons. <span class="sort-ico">▼</span></th>
+<th data-ccol="loadKw" title="Sanctioned / Connected Load (kW)">Load (kW) <span class="sort-ico">↕</span></th>
+<th data-ccol="billedConsumers" title="Billed Consumers">Billed Cons. <span class="sort-ico">↕</span></th>
+<th data-ccol="paidConsumers" title="Paid Consumers (Last pay date is of current month)">Paid Cons. <span class="sort-ico">↕</span></th>
+<th data-ccol="billedMu" title="Billed Energy (Million Units)">Billed MU <span class="sort-ico">↕</span></th>
+<th data-ccol="assessmentCr" title="Assessment Amount (₹ Crore)">Assessed ₹Cr <span class="sort-ico">↕</span></th>
+<th data-ccol="realisedCr" title="Realised Amount (₹ Crore)">Realised ₹Cr <span class="sort-ico">↕</span></th>
+<th data-ccol="abr" title="Average Billing Rate (₹/kWh)">ABR ₹/kWh <span class="sort-ico">↕</span></th>
+<th data-ccol="collectionEff" title="Collection Efficiency (%)">Coll. Eff. % <span class="sort-ico">↕</span></th>
 </tr>
 </thead>
 <tbody id="byCategoryBody">
@@ -559,5 +554,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261009_153000"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261012_130000"></script></body>
 </html>

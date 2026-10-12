@@ -838,20 +838,21 @@ function calculateMetrics() {
 
 function renderKpis(d) {
   if (!d) return;
-  document.getElementById('kpiIE').textContent = fmt(d.inputEnergyMu, 1);
-  document.getElementById('kpiSE').textContent = fmt(d.soldEnergyMu, 1);
-  document.getElementById('kpiBE').textContent = (d.billingEfficiency || 0).toFixed(1) + '%';
-  document.getElementById('kpiCE').textContent = (d.collectionEfficiency || 0).toFixed(1) + '%';
-  document.getElementById('kpiLL').textContent = (d.lineLoss || 0).toFixed(1) + '%';
-  document.getElementById('kpiATC').textContent = (d.atcLoss || 0).toFixed(1) + '%';
+  document.getElementById('kpiIE').textContent = fmt(d.inputEnergyMu, 2);
+  document.getElementById('kpiSE').textContent = fmt(d.soldEnergyMu, 2);
+  document.getElementById('kpiAss').textContent = fmt(d.assessmentCr, 2);
+  document.getElementById('kpiReal').textContent = fmt(d.realizationCr, 2);
+  document.getElementById('kpiBE').textContent = (d.billingEfficiency || 0).toFixed(2) + '%';
+  document.getElementById('kpiCE').textContent = (d.collectionEfficiency || 0).toFixed(2) + '%';
+  document.getElementById('kpiLL').textContent = (d.lineLoss || 0).toFixed(2) + '%';
+  document.getElementById('kpiATC').textContent = (d.atcLoss || 0).toFixed(2) + '%';
 
   document.getElementById('kpiABR').textContent = fmt(d.avgBillingRate, 2);
   document.getElementById('kpiThru').textContent = fmt(d.thruRate, 2);
-  document.getElementById('kpiLossPerUnit').textContent = fmt(d.lossPerUnit, 2);
-  document.getElementById('kpiAss').textContent = fmt(d.assessmentCr);
-  document.getElementById('kpiReal').textContent = fmt(d.realizationCr);
+  const elLPU = document.getElementById('kpiLossPerUnit');
+  if (elLPU) elLPU.textContent = fmt(d.lossPerUnit, 2);
   const elALV = document.getElementById('kpiALV');
-  if (elALV) elALV.textContent = fmt(d.atcLossValueCr);
+  if (elALV) elALV.textContent = fmt(d.atcLossValueCr, 2);
 
   document.getElementById('cntTotal').textContent = fmt(d.totalFeeders);
   document.getElementById('cntAudited').textContent = fmt(d.auditedFeeders);
