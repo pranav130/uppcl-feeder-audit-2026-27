@@ -10,12 +10,11 @@
 /* ── Auth Guard: Redirect unauthenticated sessions to login page ── */
 (function() {
   try {
-    const token = sessionStorage.getItem('uppcl_auth_token') || localStorage.getItem('uppcl_auth_token');
-    if (!token || token !== btoa('UPPCL_AUTHENTICATED')) {
+    const dek = sessionStorage.getItem('uppcl_dek') || localStorage.getItem('uppcl_dek');
+    if (!dek || dek.length !== 44) {
       window.location.replace('login.html');
     } else {
-      sessionStorage.setItem('uppcl_auth_token', token);
-      localStorage.setItem('uppcl_auth_token', token);
+      sessionStorage.setItem('uppcl_dek', dek);
     }
   } catch (e) {
     window.location.replace('login.html');
@@ -230,8 +229,55 @@
 <div class="page-buttons" id="pageButtons"></div>
 </div>
 </div>
-<script src="data/feeders.js"></script>
+<script src="data/feeders.js?v=20261012_140000"></script>
 <script>
+        let _cachedCryptoKey = null;
+
+        function b64ToBytes(b64) {
+            const bin = atob(b64);
+            const len = bin.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+            return bytes;
+        }
+
+        async function getDrilldownCryptoKey() {
+            if (_cachedCryptoKey) return _cachedCryptoKey;
+            const dekB64 = sessionStorage.getItem('uppcl_dek') || localStorage.getItem('uppcl_dek');
+            if (!dekB64) throw new Error('Missing decryption key');
+            const dekBytes = b64ToBytes(dekB64);
+            if (dekBytes.length !== 32) throw new Error('Invalid key length');
+            _cachedCryptoKey = await window.crypto.subtle.importKey(
+                'raw',
+                dekBytes,
+                { name: 'AES-GCM' },
+                false,
+                ['decrypt']
+            );
+            return _cachedCryptoKey;
+        }
+
+        async function decryptVaultPayload(encObj) {
+            const key = await getDrilldownCryptoKey();
+            const iv = b64ToBytes(encObj.iv);
+            const ct = b64ToBytes(encObj.ct);
+            const plainBuf = await window.crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv },
+                key,
+                ct
+            );
+            return JSON.parse(new TextDecoder().decode(plainBuf));
+        }
+
+        function handleAuthError(err) {
+            console.error('Authentication / Decryption failed:', err);
+            sessionStorage.removeItem('uppcl_dek');
+            localStorage.removeItem('uppcl_dek');
+            sessionStorage.removeItem('uppcl_auth_token');
+            localStorage.removeItem('uppcl_auth_token');
+            window.location.replace('login.html');
+        }
+
         const slugMap = {
             '0% to 5%': '0_to_5_pct',
             '0_to_5_pct': '0_to_5_pct',
@@ -586,17 +632,24 @@
             }
 
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#64748b;">Loading ${slabParam} dataset (${lossType === 'atc_loss' ? 'AT&C Loss' : 'Line Loss'})...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#64748b;">Decrypting &amp; loading ${slabParam} dataset (${lossType === 'atc_loss' ? 'AT&C Loss' : 'Line Loss'})...</td></tr>`;
 
-            const scriptPath = `slab_data/${lossType}_${slug}.js`;
+            const scriptPath = `slab_data/${lossType}_${slug}.js?v=20261012_140000`;
             const s = document.createElement('script');
             s.src = scriptPath;
-            s.onload = function() {
-                if (window.CURRENT_SLAB_DATA) {
-                    slabCache[key] = window.CURRENT_SLAB_DATA;
-                    applyStaticFilters();
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#dc2626;">Dataset loaded but empty.</td></tr>`;
+            s.onload = async function() {
+                try {
+                    if (window.__ENCRYPTED_SLAB) {
+                        window.CURRENT_SLAB_DATA = await decryptVaultPayload(window.__ENCRYPTED_SLAB);
+                    }
+                    if (window.CURRENT_SLAB_DATA) {
+                        slabCache[key] = window.CURRENT_SLAB_DATA;
+                        applyStaticFilters();
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#dc2626;">Dataset loaded but empty.</td></tr>`;
+                    }
+                } catch (err) {
+                    handleAuthError(err);
                 }
             };
             s.onerror = function() {
@@ -770,8 +823,28 @@
             window.history.replaceState({}, '', url);
         }
 
-        // Initialize Page
-        loadData();
+        // Initialize Page (Decrypt Vault & Load Dataset)
+        (async function initDrilldown() {
+            try {
+                if (!window.__FEEDERS_RAW && window.__ENCRYPTED_FEEDERS) {
+                    window.__FEEDERS_RAW = await decryptVaultPayload(window.__ENCRYPTED_FEEDERS);
+                }
+                if (searchParam && !rawSlab && window.__FEEDERS_RAW) {
+                    const info = findFeederSlabFromRaw(searchParam);
+                    if (info) {
+                        if (!urlParams.get('type') && info.atcSlab) lossType = 'atc_loss';
+                        rawSlab = (lossType === 'atc_loss' ? info.atcSlab : info.lineSlab);
+                        slug = slugMap[rawSlab] || '30_to_50_pct';
+                        slabParam = titleMap[slug] || '30% to 50%';
+                        document.getElementById('lossTypeSelect').value = lossType;
+                        document.getElementById('slabSelect').value = slug;
+                    }
+                }
+                loadData();
+            } catch (err) {
+                handleAuthError(err);
+            }
+        })();
     </script>
 </body>
 </html>

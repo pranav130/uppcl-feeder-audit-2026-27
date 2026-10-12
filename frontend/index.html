@@ -11,12 +11,11 @@
 /* ── Auth Guard: Redirect unauthenticated sessions to login page ── */
 (function() {
   try {
-    const token = sessionStorage.getItem('uppcl_auth_token') || localStorage.getItem('uppcl_auth_token');
-    if (!token || token !== btoa('UPPCL_AUTHENTICATED')) {
+    const dek = sessionStorage.getItem('uppcl_dek') || localStorage.getItem('uppcl_dek');
+    if (!dek || dek.length !== 44) {
       window.location.replace('login.html');
     } else {
-      sessionStorage.setItem('uppcl_auth_token', token);
-      localStorage.setItem('uppcl_auth_token', token);
+      sessionStorage.setItem('uppcl_dek', dek);
     }
   } catch (e) {
     window.location.replace('login.html');
@@ -554,5 +553,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261012_132500"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261012_140000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261012_140000"></script></body>
 </html>

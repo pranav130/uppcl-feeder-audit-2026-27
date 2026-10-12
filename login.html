@@ -323,35 +323,84 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   LOGIN CONFIGURATION
+   CRYPTOGRAPHIC AUTHENTICATION VAULT (PBKDF2-SHA256 + AES-256-GCM)
    ─────────────────────────────────────────────────────────────
-   To add/remove users, edit the USERS object below.
-   Keys are usernames (case-insensitive), values are passwords.
-
-   ⚠️  NOTE: This is a client-side password gate — it keeps
-   casual visitors out but is NOT military-grade security.
-   Anyone who inspects the JS source can see the passwords.
-   For real security, host on a server with proper auth.
+   • Zero plaintext passwords are stored in this file or repository.
+   • Each user entry contains a 128-bit random salt, 96-bit IV, and
+     AES-256-GCM wrapped Master Data Encryption Key (DEK).
+   • Key derivation uses PBKDF2-HMAC-SHA256 with 100,000 iterations.
+   • Dashboard & feeder datasets are encrypted with AES-256-GCM and
+     can only be decrypted in memory using the unwrapped 256-bit DEK.
    ══════════════════════════════════════════════════════════════ */
-const USERS = {
-  'admin':   'uppcl@2027',
-  'pranav':  'pranav@123',
-  'viewer':  'psr@view2027'
+const PBKDF2_ITERATIONS = 100000;
+const DEK_VERIFIER = '2df12fad66102db3916a5ca1cda3dc47f71c4081a2e02a566932cd9b99bcc262';
+const AUTH_VAULT = {
+  "admin": {
+    "salt": "VZ2waxvjnro3Sc80ispZLg==",
+    "iv": "eNtECmLPsmhvd1r7",
+    "wrapped": "A1EYP3VJjuODPobNfxtiAyMsTXmhWmkNMVQISLt+byT4O70d8/cAWxQSI4FZOm8X"
+  },
+  "pranav": {
+    "salt": "UBMEUynbLnTNbIuedDFf/A==",
+    "iv": "84xTvwwGhJXSarKD",
+    "wrapped": "SvwxZmMBjcuNXv5wVVlXOn1GMItZbHZJ6Z4JuF3KHAdoF/db4W2qlQaz5eTHt1AK"
+  },
+  "viewer": {
+    "salt": "5/2fvtCW97EeaSsMApjOxA==",
+    "iv": "7xUu/dneXx8/AoOO",
+    "wrapped": "56JKzQlfbKaAQo9k+2CorEcrbO7cMpOebrs8lNu4mwzHYms+rLjTvCWwBPFOUZgO"
+  }
 };
 
-// Where to redirect after login
 const DASHBOARD_URL = 'index.html';
+const DEK_STORAGE_KEY = 'uppcl_dek';
 
-// Session key stored in browser
-const SESSION_KEY = 'uppcl_auth_token';
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
 
-// ── Auto-redirect if already logged in ──────────────────────
-(function checkSession() {
-  const token = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
-  if (token && token === btoa('UPPCL_AUTHENTICATED')) {
-    sessionStorage.setItem(SESSION_KEY, token);
-    localStorage.setItem(SESSION_KEY, token);
-    window.location.replace(DASHBOARD_URL);
+function bytesToB64(bytes) {
+  let bin = '';
+  const arr = new Uint8Array(bytes);
+  for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+  return btoa(bin);
+}
+
+async function verifyDekBytes(dekBytes) {
+  try {
+    if (!dekBytes || dekBytes.length !== 32) return false;
+    const suffix = new TextEncoder().encode(':UPPCL_AES256_VERIFY');
+    const combined = new Uint8Array(dekBytes.length + suffix.length);
+    combined.set(dekBytes, 0);
+    combined.set(suffix, dekBytes.length);
+    const hashBuf = await window.crypto.subtle.digest('SHA-256', combined);
+    const hashHex = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex === DEK_VERIFIER;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ── Auto-redirect only if a cryptographically valid 256-bit DEK is present ──
+(async function checkSession() {
+  try {
+    const dekB64 = sessionStorage.getItem(DEK_STORAGE_KEY) || localStorage.getItem(DEK_STORAGE_KEY);
+    if (!dekB64) return;
+    const dekBytes = b64ToBytes(dekB64);
+    if (await verifyDekBytes(dekBytes)) {
+      sessionStorage.setItem(DEK_STORAGE_KEY, dekB64);
+      localStorage.setItem(DEK_STORAGE_KEY, dekB64);
+      window.location.replace(DASHBOARD_URL);
+    } else {
+      sessionStorage.removeItem(DEK_STORAGE_KEY);
+      localStorage.removeItem(DEK_STORAGE_KEY);
+    }
+  } catch (e) {
+    sessionStorage.removeItem(DEK_STORAGE_KEY);
+    localStorage.removeItem(DEK_STORAGE_KEY);
   }
 })();
 
@@ -378,46 +427,106 @@ document.getElementById('togglePwd').addEventListener('click', () => {
   document.getElementById('togglePwd').textContent = isHidden ? '🙈' : '👁';
 });
 
-// ── Login handler ─────────────────────────────────────────────
-function handleLogin(e) {
+// ── Brute-force lockout state ─────────────────────────────────
+let failedAttempts = 0;
+let lockoutUntil = 0;
+
+// ── Cryptographic Login Handler (PBKDF2-SHA256 + AES-256-GCM) ─
+async function handleLogin(e) {
   e.preventDefault();
 
   const btn      = document.getElementById('loginBtn');
   const errorDiv = document.getElementById('errorMsg');
   const card     = document.getElementById('loginCard');
+
+  const now = Date.now();
+  if (now < lockoutUntil) {
+    const secs = Math.ceil((lockoutUntil - now) / 1000);
+    errorDiv.textContent = `⏳ Too many failed attempts. Please wait ${secs}s before trying again.`;
+    errorDiv.classList.add('show');
+    return;
+  }
+
   const username = document.getElementById('username').value.trim().toLowerCase();
   const password = document.getElementById('password').value;
 
-  // Disable button while "checking"
   btn.disabled = true;
-  btn.textContent = 'Signing in...';
+  btn.textContent = 'Verifying cryptographic key...';
   errorDiv.classList.remove('show');
 
-  // Slight delay to prevent instant brute-force feeling
-  setTimeout(() => {
-    const expectedPassword = USERS[username];
+  try {
+    const vaultEntry = AUTH_VAULT[username];
+    const enc = new TextEncoder();
 
-    if (expectedPassword && password === expectedPassword) {
-      // ✅ Correct — set session and redirect
-      sessionStorage.setItem(SESSION_KEY, btoa('UPPCL_AUTHENTICATED'));
-      localStorage.setItem(SESSION_KEY, btoa('UPPCL_AUTHENTICATED'));
-      localStorage.setItem('uppcl_theme', html.getAttribute('data-theme'));
-      btn.textContent = '✔ Authenticated! Redirecting...';
-      setTimeout(() => {
-        window.location.replace(DASHBOARD_URL);
-      }, 600);
+    // Always perform 100,000 PBKDF2 iterations even on unknown username to prevent timing enumeration
+    const saltBytes = vaultEntry ? b64ToBytes(vaultEntry.salt) : enc.encode('UPPCL_DUMMY_SALT');
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      enc.encode(`${username}:${password}`),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey']
+    );
 
-    } else {
-      // ❌ Wrong credentials
-      errorDiv.classList.add('show');
-      card.classList.add('shake');
-      setTimeout(() => card.classList.remove('shake'), 500);
-      btn.disabled = false;
-      btn.textContent = 'Sign In →';
-      document.getElementById('password').value = '';
-      document.getElementById('password').focus();
+    const kek = await window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: saltBytes,
+        iterations: PBKDF2_ITERATIONS,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+
+    if (!vaultEntry) {
+      throw new Error('Invalid user');
     }
-  }, 400);
+
+    const dekBuf = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: b64ToBytes(vaultEntry.iv),
+        additionalData: enc.encode(username)
+      },
+      kek,
+      b64ToBytes(vaultEntry.wrapped)
+    );
+
+    const dekBytes = new Uint8Array(dekBuf);
+    const isValid = await verifyDekBytes(dekBytes);
+    if (!isValid) throw new Error('Key verification failed');
+
+    // ✅ Authentic 256-bit DEK unwrapped — store session key and redirect
+    const dekB64 = bytesToB64(dekBytes);
+    sessionStorage.setItem(DEK_STORAGE_KEY, dekB64);
+    localStorage.setItem(DEK_STORAGE_KEY, dekB64);
+    localStorage.setItem('uppcl_theme', html.getAttribute('data-theme'));
+
+    failedAttempts = 0;
+    btn.textContent = '✔ Key Unlocked! Decrypting Dashboard...';
+    setTimeout(() => {
+      window.location.replace(DASHBOARD_URL);
+    }, 300);
+
+  } catch (err) {
+    failedAttempts++;
+    if (failedAttempts >= 5) {
+      lockoutUntil = Date.now() + 15000;
+      errorDiv.textContent = '❌ 5 failed attempts. Locked for 15 seconds.';
+    } else {
+      errorDiv.textContent = '❌ Incorrect username or password. Please try again.';
+    }
+    errorDiv.classList.add('show');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 500);
+    btn.disabled = false;
+    btn.textContent = 'Sign In →';
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
 }
 
 // ── Auto-focus username field on load ─────────────────────────
