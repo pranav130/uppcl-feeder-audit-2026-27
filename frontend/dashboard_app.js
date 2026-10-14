@@ -1764,6 +1764,22 @@ if (modalMethodology) {
   });
 }
 
+// Filter Guide Modal Wiring
+const btnFilterGuide = document.getElementById('btnFilterGuide');
+const modalFilterGuide = document.getElementById('filterGuideModal');
+const filterGuideCloseBtn = document.getElementById('filterGuideCloseBtn');
+if (btnFilterGuide && modalFilterGuide) {
+  btnFilterGuide.addEventListener('click', () => modalFilterGuide.classList.add('active'));
+}
+if (filterGuideCloseBtn && modalFilterGuide) {
+  filterGuideCloseBtn.addEventListener('click', () => modalFilterGuide.classList.remove('active'));
+}
+if (modalFilterGuide) {
+  modalFilterGuide.addEventListener('click', (e) => {
+    if (e.target === modalFilterGuide) modalFilterGuide.classList.remove('active');
+  });
+}
+
 // Feeder Search (debounced)
 let searchTimeout = null;
 document.getElementById('fSearch').addEventListener('input', function() {
