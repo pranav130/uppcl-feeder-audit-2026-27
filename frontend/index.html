@@ -141,13 +141,13 @@
 <div class="leave-out-bar">
 <span class="leave-out-title">Filters</span>
 <label class="checkbox-group" title="Exclude feeders where assessment &gt; ₹1 Crore AND billing rate &gt; ₹50/kWh">
-<input id="chkAbnormal" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Abnormal Assessment
+<input id="chkAbnormal" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Abnormal Assessment
       </label>
 <label class="checkbox-group" title="Exclude feeders where Billed Energy exceeds Input Energy (negative line loss)">
-<input id="chkBilledGtInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Billed &gt; Input
+<input id="chkBilledGtInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Billed &gt; Input
       </label>
 <label class="checkbox-group" title="Exclude feeders with zero input energy in month">
-<input id="chkZeroInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> A Month with Zero Input
+<input id="chkZeroInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude A Month with Zero Input
       </label>
 
 <label class="checkbox-group" title="Include PTW Connections (Agricultural PTW: Assessment credited to Realization)">
@@ -506,7 +506,7 @@
 <div class="notes-body open" id="notesBody">
 <p><b>1. Multiplicative AT&amp;C Formula:</b> AT&amp;C Loss is mathematically calculated as <code>100% − (Billing Efficiency × Collection Efficiency)</code>.</p>
 <p><b>2. Thru Rate vs ABR:</b> <b>ABR</b> (Average Billing Rate) = <code>Assessment ÷ Sold Energy</code>. <b>Thru Rate</b> = <code>Realised Amount ÷ Input Energy</code>, indicating actual cash realized per unit wheeled.</p>
-<p><b>3. Leave-out Filters:</b> Abnormal Assessment excludes feeders with assessment &gt; ₹1 Crore and ABR &gt; ₹50/unit. Billed &gt; Input removes feeders with negative line loss. Zero input leaves out feeders without metering in August.</p>
+<p><b>3. Leave-out Filters:</b> Exclude Abnormal Assessment excludes feeders with assessment &gt; ₹1 Crore and ABR &gt; ₹50/unit. Exclude Billed &gt; Input removes feeders with negative line loss. Exclude A Month with Zero Input leaves out feeders without metering in any month.</p>
 <p><b>4. Units:</b> Energy in MU (Million Units = 1,000 MWh). Financial amounts in ₹ Crore (100 Lakhs = 1 Crore). Rates in ₹/kWh.</p>
 </div>
 </section>
@@ -523,7 +523,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>A. Abnormal Assessment</span>
+<span>A. Exclude Abnormal Assessment</span>
 <span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Evaluates feeder billing data where Average Billing Rate (ABR) exceeds <code>₹50/kWh</code> OR where progressive Assessment exceeds <code>₹100 Lakhs (₹1 Crore)</code> with zero sold energy.</p>
@@ -533,7 +533,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>B. Billed &gt; Input</span>
+<span>B. Exclude Billed &gt; Input</span>
 <span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Identifies feeders where progressive Billed Energy (Sold Energy) exceeds Input Energy, producing a negative line loss condition (Flag bit 2).</p>
@@ -543,7 +543,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>C. A Month with Zero Input</span>
+<span>C. Exclude A Month with Zero Input</span>
 <span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Targets feeders that recorded zero input energy (<code>Input Energy = 0 MWh</code>) in one or more months of the reporting period April–September 2026 (Flag bit 4), typically indicating metering failure or unmetered supply.</p>
