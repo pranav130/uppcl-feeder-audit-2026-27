@@ -1580,8 +1580,8 @@ function renderChips() {
   if (state.division) chips.push({ label: `Division: ${state.division}`, clear: () => { state.division = ''; document.getElementById('fDivision').value = ''; } });
   if (state.area) chips.push({ label: `Area: ${state.area}`, clear: () => { state.area = ''; document.getElementById('fArea').value = ''; } });
   if (state.feederType) chips.push({ label: `Type: ${state.feederType}`, clear: () => { state.feederType = ''; document.getElementById('fFeederType').value = ''; } });
-  if (state.monthFrom !== 'Apr' || state.monthTo !== 'Aug') {
-    chips.push({ label: `Months: ${state.monthFrom}–${state.monthTo} 2026`, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Aug'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Aug'; } });
+  if (state.monthFrom !== 'Apr' || state.monthTo !== 'Sep') {
+    chips.push({ label: `Months: ${state.monthFrom}–${state.monthTo} 2026`, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Sep'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Sep'; } });
   }
   if (state.search) chips.push({ label: `Search: "${state.search}"`, clear: () => { state.search = ''; document.getElementById('fSearch').value = ''; } });
   if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
@@ -1816,7 +1816,7 @@ function resetFilters() {
   state.area = '';
   state.feederType = '';
   state.monthFrom = 'Apr';
-  state.monthTo = 'Aug';
+  state.monthTo = 'Sep';
   state.search = '';
   state.tableSearch = '';
   state.excludeAbnormal = false;
@@ -1846,7 +1846,7 @@ function resetFilters() {
   document.getElementById('fArea').value = '';
   document.getElementById('fFeederType').value = '';
   document.getElementById('fMonthFrom').value = 'Apr';
-  document.getElementById('fMonthTo').value = 'Aug';
+  document.getElementById('fMonthTo').value = 'Sep';
   document.getElementById('fSearch').value = '';
   document.getElementById('tSearch').value = '';
   document.getElementById('chkAbnormal').checked = false;
@@ -2374,8 +2374,8 @@ function exportProgressiveSummaryXlsx() {
   // 2-tier headers matching dashboard
   const headerRow1 = [
     'Discom', 'Zone / Rollup', 'Total Feeders',
-    'LINE LOSS SLAB (Progressive Upto Aug-26)', '', '', '', '', '', '', '',
-    'AT&C LOSS SLAB (Progressive Upto Aug-26)', '', '', '', '', '', '', '',
+    `LINE LOSS SLAB (Progressive Upto ${state.monthTo}-26)`, '', '', '', '', '', '', '',
+    `AT&C LOSS SLAB (Progressive Upto ${state.monthTo}-26)`, '', '', '', '', '', '', '',
     'IE 0', 'No Consumers Tagged'
   ];
 
