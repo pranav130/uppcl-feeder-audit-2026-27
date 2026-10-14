@@ -5,12 +5,19 @@ import openpyxl
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-data_file = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\data\feeders.json"
-slab_data_dir = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\slab_data"
-excel_exports_dir = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27\frontend\Slab_Excel_Exports"
+REPO_DIR = r"C:\Users\HP\.gemini\antigravity\scratch\UPPCL_11KV_PSR_Dashboard_2026_27"
+data_file = os.path.join(REPO_DIR, "frontend", "data", "feeders.json")
+slab_dirs = [
+    os.path.join(REPO_DIR, "frontend", "slab_data"),
+    os.path.join(REPO_DIR, "slab_data")
+]
+excel_dirs = [
+    os.path.join(REPO_DIR, "frontend", "Slab_Excel_Exports"),
+    os.path.join(REPO_DIR, "Slab_Excel_Exports")
+]
 
-os.makedirs(slab_data_dir, exist_ok=True)
-os.makedirs(excel_exports_dir, exist_ok=True)
+for d in slab_dirs + excel_dirs:
+    os.makedirs(d, exist_ok=True)
 
 with open(data_file, 'r', encoding='utf-8') as f:
     dataset = json.load(f)
@@ -131,14 +138,14 @@ for loss_type, loss_idx, prefix in [('line_loss', 16, 'Line_Loss'), ('atc_loss',
         }
 
         # Write JS for drilldown explorer
-        js_out = os.path.join(slab_data_dir, f"{loss_type}_{slug}.js")
-        with open(js_out, "w", encoding="utf-8") as f:
-            f.write("window.CURRENT_SLAB_DATA = ")
-            json.dump(slab_json, f, separators=(',', ':'))
-            f.write(";\n")
+        for sdir in slab_dirs:
+            js_out = os.path.join(sdir, f"{loss_type}_{slug}.js")
+            with open(js_out, "w", encoding="utf-8") as f:
+                f.write("window.CURRENT_SLAB_DATA = ")
+                json.dump(slab_json, f, separators=(',', ':'))
+                f.write(";\n")
 
         # Write Excel file
-        excel_out = os.path.join(excel_exports_dir, f"{prefix}_{slug}.xlsx")
         wb_slab = openpyxl.Workbook()
         ws = wb_slab.active
         ws.title = f"{prefix}_{slug}"[:31]
@@ -153,6 +160,8 @@ for loss_type, loss_idx, prefix in [('line_loss', 16, 'Line_Loss'), ('atc_loss',
         ws.append(headers)
         for i, row in enumerate(m_rows):
             ws.append([i+1] + row)
-        wb_slab.save(excel_out)
+        for edir in excel_dirs:
+            excel_out = os.path.join(edir, f"{prefix}_{slug}.xlsx")
+            wb_slab.save(excel_out)
 
 print("All slab datasets and Excel exports generated successfully.")

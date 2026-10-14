@@ -30,7 +30,7 @@
 <header>
 <div>
 <h1>⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
-<p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto August 2026</p>
+<p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto September 2026</p>
 </div>
 <div class="header-actions">
 <span class="db-badge" id="dbBadge">• Synced with PostgreSQL (energy_db)</span>
@@ -50,7 +50,7 @@
 <span class="tag-badge ptw-on" id="govtStatusBadge">Govt: DEEMED (100%)</span>
 <span class="tag-badge ptw-off" id="cdfStatusBadge">CDF: INCLUDED</span>
 <span class="tag-badge ptw-off" id="subsidyStatusBadge">Subsidy: EXCLUDED</span>
-<span class="tag-badge">Data Period: April 2026 – August 2026</span>
+<span class="tag-badge">Data Period: April 2026 – September 2026</span>
 <span class="tag-badge">Financial Year: FY 2026-27</span>
 </div>
 <div>
@@ -115,12 +115,14 @@
 <option value="Jun">Jun 2026</option>
 <option value="Jul">Jul 2026</option>
 <option value="Aug">Aug 2026</option>
+<option value="Sep">Sep 2026</option>
 </select>
 </div>
 <div class="f">
 <label for="fMonthTo">To</label>
 <select id="fMonthTo">
-<option selected="" value="Aug">Aug 2026</option>
+<option selected="" value="Sep">Sep 2026</option>
+<option value="Aug">Aug 2026</option>
 <option value="Jul">Jul 2026</option>
 <option value="Jun">Jun 2026</option>
 <option value="May">May 2026</option>
@@ -135,9 +137,9 @@
 <button class="btn" id="btnReset" type="button">✕ Reset</button>
 </div>
 </div>
-<!-- Row 2: Leave Out Feeders With (Interactive Exclusions) -->
+<!-- Row 2: Filters (Interactive Controls) -->
 <div class="leave-out-bar">
-<span class="leave-out-title">Leave out feeders with:</span>
+<span class="leave-out-title">Filters</span>
 <label class="checkbox-group" title="Exclude feeders where assessment &gt; ₹1 Crore AND billing rate &gt; ₹50/kWh">
 <input id="chkAbnormal" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Abnormal Assessment
       </label>
@@ -240,9 +242,9 @@
 <div class="ph">
 <div>
 <h2>📊 Input vs Billed Energy by Month</h2>
-<p class="hint">Monthly energy comparison (MU) across April–August 2026</p>
+<p class="hint">Monthly energy comparison (MU) across April–September 2026</p>
 </div>
-<span class="pill p-good" style="font-size:11px;">Apr–Aug 2026</span>
+<span class="pill p-good" style="font-size:11px;">Apr–Sep 2026</span>
 </div>
 <div class="chart-box">
 <canvas id="chartMonthlyEnergy"></canvas>
@@ -252,9 +254,9 @@
 <div class="ph">
 <div>
 <h2>📈 Loss Trend by Month</h2>
-<p class="hint">Line Loss % vs AT&amp;C Loss % trend across April–August 2026</p>
+<p class="hint">Line Loss % vs AT&amp;C Loss % trend across April–September 2026</p>
 </div>
-<span class="pill p-warn" style="font-size:11px;">Apr–Aug 2026</span>
+<span class="pill p-warn" style="font-size:11px;">Apr–Sep 2026</span>
 </div>
 <div class="chart-box">
 <canvas id="chartMonthlyLoss"></canvas>
@@ -355,16 +357,16 @@
 </div>
 <!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
 <div class="grid2">
-<!-- AT&C Loss Slab Horizontal Bar -->
+<!-- Line Loss by Category Horizontal Bar -->
 <section class="panel">
 <div class="ph">
 <div>
-<h2>🔴 Feeders by AT&amp;C Loss Slab</h2>
-<p class="hint">Distribution of audited feeders across loss slabs</p>
+<h2>⚡ Line Loss by Category</h2>
+<p class="hint">Distribution of audited feeders across line loss categories</p>
 </div>
 <div class="seg" role="group">
-<button aria-pressed="true" data-hbar="atc" type="button">AT&amp;C</button>
-<button aria-pressed="false" data-hbar="line" type="button">Line</button>
+<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
+<button aria-pressed="true" data-hbar="line" type="button">Line</button>
 </div>
 </div>
 <div class="bar-chart" id="hBarContainer"></div>
@@ -412,11 +414,11 @@
 </table>
 </div>
 </section>
-<!-- ── TOP 150 FEEDERS WITH LARGEST AT&C LOSS VALUE (NEW) ── -->
+<!-- ── TOP 150 FEEDERS WITH LARGEST REVENUE LOSS VALUE ── -->
 <section class="panel">
 <div class="ph">
 <div>
-<h2>🔥 Feeders with the Largest AT&amp;C Loss Value</h2>
+<h2>🔥 Feeders with the Largest Revenue Loss Value</h2>
 <p class="hint">Top 150 feeders ranked by financial loss value in ₹ Crore (Input Energy × ABR × AT&amp;C Loss %)</p>
 </div>
 <span class="pill p-crit" id="top150CountBadge">Top 150 Feeders</span>
@@ -508,6 +510,89 @@
 <p><b>4. Units:</b> Energy in MU (Million Units = 1,000 MWh). Financial amounts in ₹ Crore (100 Lakhs = 1 Crore). Rates in ₹/kWh.</p>
 </div>
 </section>
+
+<!-- ── FILTER GUIDE — DEFINITIONS AND IMPACT ── -->
+<section class="panel" id="filterGuideSection" style="margin-top: 16px;">
+<div class="ph">
+<div>
+<h2>📘 Filter Guide — Definitions and Impact</h2>
+<p class="hint">Comprehensive operational guide to the 7 interactive filter checkboxes and their exact impact on feeder populations and calculations</p>
+</div>
+</div>
+<div style="padding: 16px 20px 24px; display: grid; gap: 16px; font-size: 13px; color: var(--ink-2); line-height: 1.6;">
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>A. Abnormal Assessment</span>
+<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Evaluates feeder billing data where Average Billing Rate (ABR) exceeds <code>₹50/kWh</code> OR where progressive Assessment exceeds <code>₹100 Lakhs (₹1 Crore)</code> with zero sold energy.</p>
+<p><strong>Selecting the Checkbox:</strong> Excludes these statistical outlier feeders entirely from the active calculation population (affecting Input Energy, Sold Energy, Assessment, Realization, and Feeder Counts across all cards and tables).</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Keeps all feeders included transparently in calculations regardless of abnormal assessment anomalies.</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>B. Billed &gt; Input</span>
+<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Identifies feeders where progressive Billed Energy (Sold Energy) exceeds Input Energy, producing a negative line loss condition (Flag bit 2).</p>
+<p><strong>Selecting the Checkbox:</strong> Excludes feeders with Billed &gt; Input from the active dashboard calculations and summaries.</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Retains these feeders in the dataset, ensuring the entire network is accounted for without hiding negative loss anomalies.</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>C. A Month with Zero Input</span>
+<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Targets feeders that recorded zero input energy (<code>Input Energy = 0 MWh</code>) in one or more months of the reporting period April–September 2026 (Flag bit 4), typically indicating metering failure or unmetered supply.</p>
+<p><strong>Selecting the Checkbox:</strong> Excludes feeders that experienced zero input in any month from the active population.</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Includes all feeders in progressive totals as recorded.</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>D. Include PTW Connections</span>
+<span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount (₹38,126.98 Cr), total feeders (26,033), Input Energy (79,974.61 MU), Sold Energy (50,155.59 MU), and Line Loss remain strictly <strong>INVARIANT</strong>.</p>
+<p><strong>Selecting the Checkbox:</strong> Credits PTW assessment amount directly into revenue realization, increasing Collection Efficiency and reducing computed AT&amp;C Loss.</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Evaluates realization strictly on direct cash collected without agricultural subsidy credit.</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>E. Include Govt Connections</span>
+<span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Governs government consumer categories (Public Water Works LMV-3, Institutions/Govt Offices LMV-4A, and Street Lights LMV-7) where assessment has deemed revenue backing.</p>
+<p><strong>Selecting the Checkbox (Default):</strong> Treats government connections under deemed revenue credit (Assessment = Realization), recognizing statutory book transfers.</p>
+<p><strong>Deselecting the Checkbox:</strong> Removes the deemed credit adjustment and reduces revenue realization by 4.5% of assessment across feeders, reflecting strictly physical cash collected (~40% Collection Efficiency for government accounts).</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>F. Exclude CDF Bills</span>
+<span class="tag-badge" style="font-size: 10px;">Energy &amp; Assessment Adjustment Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Adjusts for Defective / Change-of-Defective (CDF) consumer bills and extreme consumption/assessment outliers (&gt;1,500 units/kW or &gt;₹10,000/kW).</p>
+<p><strong>Selecting the Checkbox:</strong> Excludes CDF provisional energy and billing anomalies from Sold Energy (reduced by 2.1% to factor out provisional unread units) and Assessment (reduced by 1.5% to eliminate provisional demand spikes). <strong>Amount Realised remains completely UNCHANGED</strong> across all KPI cards, summary tables, drilldowns, and reports, reflecting exact actual revenue collections.</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Retains unadjusted billed consumption and provisional assessment as originally recorded.</p>
+</div>
+
+<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+<span>G. Include Subsidy</span>
+<span class="tag-badge" style="font-size: 10px;">Revenue Credit Filter</span>
+</h4>
+<p><strong>Implemented Rule:</strong> Incorporates State Government Subsidies (Tariff Subsidy, Powerloom Subsidy, and PTW Subsidy, excluding Cross Subsidy) into total energy revenue realization.</p>
+<p><strong>Selecting the Checkbox:</strong> Adds state subsidy entitlements (feeder PTW subsidy + 23.8% of assessed revenue) to Realization, boosting Collection Efficiency and reducing computed AT&amp;C Loss.</p>
+<p><strong>Deselecting the Checkbox (Default):</strong> Calculates realization based purely on consumer tariff collections and selected deemed credits.</p>
+</div>
+
+</div>
+</section>
 </div>
 
 
@@ -521,12 +606,12 @@
 </div>
 <div class="modal-body">
 <h4>1. Authoritative Data Source</h4>
-<p>Source Workbook: <code>11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx</code> (Sheet: <code>AUDIT DATA</code>). Covering 26,033 feeders across all 5 DISCOMs (PVVNL, DVVNL, MVVNL, PUVVNL, KESCO) for FY 2026-27.</p>
+<p>Master Reference: <code>11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx</code> (Sheet: <code>AUDIT DATA</code>), updated through September 2026 using Oracle September 2026 billing/realization and master meter energy reports. Covering 26,033 feeders across all 5 DISCOMs (PVVNL, DVVNL, MVVNL, PUVVNL, KESCO) for FY 2026-27.</p>
 <h4>2. Progressive Calculation Scope</h4>
-<p>The reporting period is <strong>April 2026 to August 2026</strong> (5 months progressive). All progressive values are calculated from the sum of monthly numerators and denominators (never from averaging monthly percentages):</p>
+<p>The reporting period is <strong>April 2026 to September 2026</strong> (6 months progressive). All progressive values are calculated from the sum of monthly numerators and denominators (never from averaging monthly percentages):</p>
 <ul>
-<li><code>Progressive Input Energy (MU) = Sum(Apr..Aug IE) / 1000</code></li>
-<li><code>Progressive Sold Energy (MU) = Sum(Apr..Aug SE) / 1000</code></li>
+<li><code>Progressive Input Energy (MU) = Sum(Apr..Sep IE) / 1000</code></li>
+<li><code>Progressive Sold Energy (MU) = Sum(Apr..Sep SE) / 1000</code></li>
 <li><code>Billing Efficiency (BE %) = (Progressive Sold Energy / Progressive Input Energy) × 100</code></li>
 <li><code>Collection Efficiency (CE %) = (Progressive Realization / Progressive Assessment) × 100</code></li>
 <li><code>Line Loss (%) = 100 - BE (%)</code></li>
@@ -537,7 +622,7 @@
 <h4>3. PTW Rule &amp; Assessment Invariance</h4>
 <p>A connection is treated as PTW when its <strong>Supply Type starts with "5"</strong> (LMV-5 Agriculture / Private Tube Well).</p>
 <ul>
-<li><strong>Assessment Amount is CONSTANT</strong>: The total assessed revenue (₹ 30,462.55 Cr), total feeders (26,033), input energy (68,168.95 MU), and sold energy (42,485.45 MU) remain completely unchanged whether PTW connections are included or excluded.</li>
+<li><strong>Assessment Amount is CONSTANT</strong>: The total assessed revenue (₹ 38,126.98 Cr), total feeders (26,033), input energy (79,974.61 MU), and sold energy (50,155.59 MU) remain completely unchanged whether PTW connections are included or excluded.</li>
 <li><strong>Realization &amp; Throughput Rate</strong>: Under the rule <strong>PTW Assessment = PTW Realization</strong>, only revenue realization and throughput rate change:
           <ul>
 <li><strong>PTW Excluded (Default)</strong>: Realization reflects cash collection without crediting PTW subsidy assessment (₹ 24,293.94 Cr; Throughput Rate: ₹ 3.56/kWh; CE: 79.75%; AT&amp;C Loss: 50.30%).</li>

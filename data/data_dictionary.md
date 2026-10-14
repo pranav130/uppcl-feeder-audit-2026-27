@@ -1,10 +1,12 @@
 # Data Dictionary & Field Mapping: UPPCL 11KV Feeder Progressive Energy Audit (FY 2026-27)
 
 ## 1. Source Information
-- **Source File**: `11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx`
-- **Sheet**: `AUDIT DATA`
+- **Source Files**: 
+  - Master Reference: `11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx` (Sheet: `AUDIT DATA`)
+  - September Billing/Realization: `UPDATED_FEEDERWISE_CONSUMPITON_ASSMT_REAL_SEP26.xlsx`
+  - September Energy: `DistributionMasterMeterDataReportExcel_202610141205585478.xls`
 - **Financial Year**: FY 2026-27
-- **Reporting Period**: April 2026 to August 2026 (Progressive 5 Months)
+- **Reporting Period**: April 2026 to September 2026 (Progressive 6 Months)
 - **Feeder Records**: 26,033
 
 ## 2. Field Definitions & Mapping
@@ -19,21 +21,21 @@
 | **Outgoing Feeder** | Col 5 (`Outgoing Feeder`) | String | 11 KV Outgoing Feeder Name and Code (26,033 feeders) |
 | **Project Area** | Col 6 (`Project Area`) | String | Operational Area category: RURAL, TEHSIL, URBAN |
 | **Feeder Nature** | Col 7 (`Feeder Nature`) | String | Feeders type: AGRICULTURE, MIXED ABOVE 25%, MIXED ABOVE 50%, INDUSTRIAL ABOVE 75%, INDEPENDENT, OTHER, SPARE, SUBSTATION |
-| **Input Energy (Monthly)** | Cols 24–28 (`I.E._Apr'26`..`Aug'26`) | Float | Feeder Input Energy measured in MWh (or '000 kWh). Total MU = Sum / 1,000 |
-| **Sold Energy (Monthly)** | Cols 48–52 (`S.E._Apr'26`..`Aug'26`) | Float | Billed / Sold Energy to consumers in MWh (or '000 kWh). Total MU = Sum / 1,000 |
-| **Assessment (Monthly)** | Cols 60–64 (`Assessment_Apr'26`..`Aug'26`) | Float | Revenue Assessment billed in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
-| **Realization (Monthly)** | Cols 72–76 (`Realization_Apr'26`..`Aug'26`) | Float | Revenue Realization collected in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
-| **PTW Assessment** | Cols 88–92 (`PTW_CA_EX_ SUBS_Apr'26`..`Aug'26`) | Float | Current Assessment for Private Tube Well connections in ₹ Lakhs |
-| **PTW Subsidy** | Cols 100–104 (`PTW_ SUBS _Apr'26`..`Aug'26`) | Float | Government PTW Subsidy in ₹ Lakhs |
-| **Billable Consumers** | Cols 36–40 (`Billable _Apr'26`..`Aug'26`) | Integer | Count of billable consumers connected to the feeder |
+| **Input Energy (Monthly)** | Cols 24–29 (`I.E._Apr'26`..`Sep'26`) | Float | Feeder Input Energy measured in MWh (or '000 kWh). Total MU = Sum / 1,000 |
+| **Sold Energy (Monthly)** | Cols 48–53 (`S.E._Apr'26`..`Sep'26`) | Float | Billed / Sold Energy to consumers in MWh (or '000 kWh). Total MU = Sum / 1,000 |
+| **Assessment (Monthly)** | Cols 60–65 (`Assessment_Apr'26`..`Sep'26`) | Float | Revenue Assessment billed in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
+| **Realization (Monthly)** | Cols 72–77 (`Realization_Apr'26`..`Sep'26`) | Float | Revenue Realization collected in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
+| **PTW Assessment** | Cols 88–93 (`PTW_CA_EX_ SUBS_Apr'26`..`Sep'26`) | Float | Current Assessment for Private Tube Well connections in ₹ Lakhs |
+| **PTW Subsidy** | Cols 100–105 (`PTW_ SUBS _Apr'26`..`Sep'26`) | Float | Government PTW Subsidy in ₹ Lakhs |
+| **Billable Consumers** | Cols 36–41 (`Billable _Apr'26`..`Sep'26`) | Integer | Count of billable consumers connected to the feeder |
 
 ## 3. Mathematical Formulas & KPIs
 
 1. **Progressive Input Energy (MU)**:
-   $$\text{Progressive Input Energy} = \frac{\sum_{m=\text{Apr}}^{\text{Aug}} \text{IE}_m}{1000}$$
+   $$\text{Progressive Input Energy} = \frac{\sum_{m=\text{Apr}}^{\text{Sep}} \text{IE}_m}{1000}$$
 
 2. **Progressive Sold Energy (MU)**:
-   $$\text{Progressive Sold Energy} = \frac{\sum_{m=\text{Apr}}^{\text{Aug}} \text{SE}_m}{1000}$$
+   $$\text{Progressive Sold Energy} = \frac{\sum_{m=\text{Apr}}^{\text{Sep}} \text{SE}_m}{1000}$$
 
 3. **Billing Efficiency (BE %)**:
    $$\text{BE (\%)} = \frac{\text{Progressive Sold Energy}}{\text{Progressive Input Energy}} \times 100$$
