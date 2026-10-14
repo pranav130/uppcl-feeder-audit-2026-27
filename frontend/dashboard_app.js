@@ -570,6 +570,7 @@ function calculateMetrics() {
       let mSE = r[9][m];
       let mAss = r[10][m];
       let mReal = r[11][m];
+      const baseMAss = mAss;
 
       // 1. Exclude CDF bills and outliers (>1500 u/kW and >₹10,000/kW)
       // Note: Amount Realised remains unaffected by CDF exclusions per business rule
@@ -586,13 +587,15 @@ function calculateMetrics() {
       // 3. Government Connections: Assessment = Realization (deemed credit)
       // When unchecked: Govt connections evaluated strictly on actual cash collected
       if (!state.includeGovt) {
-        mReal = Math.max(0, mReal - (mAss * 0.045));
+        mReal = Math.max(0, mReal - (baseMAss * 0.045));
       }
 
-      // 4. Include State Subsidy: Paid amount + State Subsidies except Cross Subsidy
+      // 4. Include State Subsidy: Government Subsidy added to BOTH Assessment & Realization
       if (state.includeSubsidy) {
         const ptwSub = (r[15] && r[15][m]) ? r[15][m] : 0;
-        mReal += (ptwSub + (mAss * 0.238));
+        const subAmt = ptwSub + (baseMAss * 0.238);
+        mAss += subAmt;
+        mReal += subAmt;
       }
 
       fIE += mIE;
@@ -612,6 +615,7 @@ function calculateMetrics() {
       let mSE = r[9][m];
       let mAss = r[10][m];
       let mReal = r[11][m];
+      const baseMAss = mAss;
 
       if (state.excludeCdf) {
         mSE *= 0.979;
@@ -621,11 +625,13 @@ function calculateMetrics() {
         mReal += r[14][m];
       }
       if (!state.includeGovt) {
-        mReal = Math.max(0, mReal - (mAss * 0.045));
+        mReal = Math.max(0, mReal - (baseMAss * 0.045));
       }
       if (state.includeSubsidy) {
         const ptwSub = (r[15] && r[15][m]) ? r[15][m] : 0;
-        mReal += (ptwSub + (mAss * 0.238));
+        const subAmt = ptwSub + (baseMAss * 0.238);
+        mAss += subAmt;
+        mReal += subAmt;
       }
 
       monthly[m].ie += mIE;

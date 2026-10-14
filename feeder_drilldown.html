@@ -229,7 +229,7 @@
 <div class="page-buttons" id="pageButtons"></div>
 </div>
 </div>
-<script src="data/feeders.js?v=20261012_140000"></script>
+<script src="data/feeders.js?v=20261014_143000"></script>
 <script>
         let _cachedCryptoKey = null;
 
@@ -634,7 +634,7 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#64748b;">Decrypting &amp; loading ${slabParam} dataset (${lossType === 'atc_loss' ? 'AT&C Loss' : 'Line Loss'})...</td></tr>`;
 
-            const scriptPath = `slab_data/${lossType}_${slug}.js?v=20261012_140000`;
+            const scriptPath = `slab_data/${lossType}_${slug}.js?v=20261014_143000`;
             const s = document.createElement('script');
             s.src = scriptPath;
             s.onload = async function() {
