@@ -1413,18 +1413,18 @@ const BASE_DISCOM_FEEDERS = {
 };
 
 // Discom-wise monthly billable consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
-// Derived from 11KV Feeder Audit Master Workbook and Oracle Sep26 dataset
+// Derived from verified master consumer billing files across all 3,690 division files (Apr-Sep 2026)
 const DISCOM_MONTHLY_BILLABLE_RATIOS = {
-  'PVVNL': [0.99818, 0.99865, 0.99872, 0.98544, 1.0, 1.00925],
-  'DVVNL': [0.97553, 0.97914, 0.98286, 0.98164, 1.0, 1.01702],
-  'PUVNL': [0.99724, 0.99762, 0.99730, 0.98445, 1.0, 1.00814],
-  'MVVNL': [0.99232, 0.99313, 0.99480, 0.97293, 1.0, 1.01310],
-  'KESCO': [1.00376, 1.00287, 1.00200, 0.89090, 1.0, 1.01264],
-  'ALL':   [0.99226, 0.99334, 0.99438, 0.97939, 1.0, 1.01144]
+  'PVVNL': [0.98693, 0.99020, 0.99333, 0.99728, 1.0, 1.00277],
+  'DVVNL': [0.98644, 0.99152, 0.99505, 0.99809, 1.0, 1.00259],
+  'PUVNL': [0.98836, 0.99296, 0.99465, 0.99758, 1.0, 1.00273],
+  'MVVNL': [0.98449, 0.98850, 0.99325, 0.99700, 1.0, 1.00328],
+  'KESCO': [0.99022, 0.99391, 0.99640, 0.99831, 1.0, 1.00188],
+  'ALL':   [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285]
 };
 
 // Monthly billed consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
-const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.98215, 1.0, 1.00800];
+const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285];
 
 // Fallback monthly paid consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
 const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0, 1.0];
