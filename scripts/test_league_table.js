@@ -18,7 +18,6 @@ global.state = {
   tableSearch: '',
   excludeAbnormal: false,
   excludeBilledGtInput: false,
-  excludeZeroInput: false,
   excludeCdf: false,
   includePtw: false,
   includeGovt: true,

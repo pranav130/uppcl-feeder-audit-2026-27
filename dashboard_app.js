@@ -68,8 +68,6 @@ window.onFilterOptionChanged = function(el) {
     state.excludeAbnormal = checked;
   } else if (id === 'chkBilledGtInput') {
     state.excludeBilledGtInput = checked;
-  } else if (id === 'chkZeroInput') {
-    state.excludeZeroInput = checked;
   }
   updateAuditBadges();
   if (typeof onFilterChanged === 'function') {
@@ -130,7 +128,6 @@ const state = {
   tableSearch: '',
   excludeAbnormal: false,
   excludeBilledGtInput: false,
-  excludeZeroInput: false,
   includePtw: false,
   includeGovt: true,
   excludeCdf: false,
@@ -499,8 +496,6 @@ function calculateMetrics() {
     if (cAbn) state.excludeAbnormal = cAbn.checked;
     const cBgt = document.getElementById('chkBilledGtInput');
     if (cBgt) state.excludeBilledGtInput = cBgt.checked;
-    const cZero = document.getElementById('chkZeroInput');
-    if (cZero) state.excludeZeroInput = cZero.checked;
   }
 
   const targetDiscomIdx = state.discom ? N.Discom.findIndex(d => {
@@ -564,7 +559,6 @@ function calculateMetrics() {
 
     const flags = r[13];
     if (state.excludeBilledGtInput && (flags & 2)) continue;
-    if (state.excludeZeroInput && (flags & 4)) continue;
 
     let fIE = 0, fSE = 0, fAss = 0, fReal = 0;
 
@@ -1917,7 +1911,6 @@ function renderChips() {
   if (state.search) chips.push({ label: `Search: "${state.search}"`, clear: () => { state.search = ''; document.getElementById('fSearch').value = ''; } });
   if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
   if (state.excludeBilledGtInput) chips.push({ label: 'Excl: Billed > Input', clear: () => { state.excludeBilledGtInput = false; document.getElementById('chkBilledGtInput').checked = false; onFilterChanged(); } });
-  if (state.excludeZeroInput) chips.push({ label: 'Excl: Zero Input', clear: () => { state.excludeZeroInput = false; document.getElementById('chkZeroInput').checked = false; onFilterChanged(); } });
   if (state.excludeCdf) chips.push({ label: 'Excl: CDF Bills', clear: () => { state.excludeCdf = false; const c = document.getElementById('chkExcludeCdf'); if (c) c.checked = false; updateAuditBadges(); onFilterChanged(); } });
   if (state.includePtw) chips.push({ label: 'PTW: Included', clear: () => { state.includePtw = false; const c = document.getElementById('chkIncludePtw'); if (c) c.checked = false; updateAuditBadges(); onFilterChanged(); } });
   if (!state.includeGovt) chips.push({ label: 'Govt Deemed: Excluded (Cash Only)', clear: () => { state.includeGovt = true; const c = document.getElementById('chkIncludeGovt'); if (c) c.checked = true; updateAuditBadges(); onFilterChanged(); } });
@@ -2038,11 +2031,6 @@ document.getElementById('chkAbnormal').addEventListener('change', function() {
 
 document.getElementById('chkBilledGtInput').addEventListener('change', function() {
   state.excludeBilledGtInput = this.checked;
-  onFilterChanged();
-});
-
-document.getElementById('chkZeroInput').addEventListener('change', function() {
-  state.excludeZeroInput = this.checked;
   onFilterChanged();
 });
 
@@ -2168,7 +2156,6 @@ function resetFilters() {
   state.tableSearch = '';
   state.excludeAbnormal = false;
   state.excludeBilledGtInput = false;
-  state.excludeZeroInput = false;
   state.excludeCdf = false;
   state.includePtw = false;
   state.includeGovt = true;
@@ -2201,7 +2188,6 @@ function resetFilters() {
   document.getElementById('tSearch').value = '';
   document.getElementById('chkAbnormal').checked = false;
   document.getElementById('chkBilledGtInput').checked = false;
-  document.getElementById('chkZeroInput').checked = false;
   const cPtw = document.getElementById('chkIncludePtw'); if (cPtw) cPtw.checked = false;
   const cGovt = document.getElementById('chkIncludeGovt'); if (cGovt) cGovt.checked = true;
   const cCdf = document.getElementById('chkExcludeCdf'); if (cCdf) cCdf.checked = false;

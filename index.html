@@ -147,9 +147,7 @@
 <label class="checkbox-group" title="Exclude feeders where Billed Energy exceeds Input Energy (negative line loss)">
 <input id="chkBilledGtInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Billed &gt; Input
       </label>
-<label class="checkbox-group" title="Exclude feeders with zero input energy in month">
-<input id="chkZeroInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude A Month with Zero Input
-      </label>
+
 
 <label class="checkbox-group" title="Include PTW Connections (Agricultural PTW: Assessment credited to Realization)">
 <input id="chkIncludePtw" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
@@ -523,7 +521,7 @@
 <div class="notes-body open" id="notesBody">
 <p><b>1. Multiplicative AT&amp;C Formula:</b> AT&amp;C Loss is mathematically calculated as <code>100% − (Billing Efficiency × Collection Efficiency)</code>.</p>
 <p><b>2. Thru Rate vs ABR:</b> <b>ABR</b> (Average Billing Rate) = <code>Assessment ÷ Sold Energy</code>. <b>Thru Rate</b> = <code>Realised Amount ÷ Input Energy</code>, indicating actual cash realized per unit wheeled.</p>
-<p><b>3. Leave-out Filters:</b> Exclude Abnormal Assessment excludes feeders with assessment &gt; ₹1 Crore and ABR &gt; ₹50/unit. Exclude Billed &gt; Input removes feeders with negative line loss. Exclude A Month with Zero Input leaves out feeders without metering in any month.</p>
+<p><b>3. Leave-out Filters:</b> Exclude Abnormal Assessment excludes feeders with assessment &gt; ₹1 Crore and ABR &gt; ₹50/unit. Exclude Billed &gt; Input removes feeders with negative line loss.</p>
 <p><b>4. Units:</b> Energy in MU (Million Units = 1,000 MWh). Financial amounts in ₹ Crore (100 Lakhs = 1 Crore). Rates in ₹/kWh.</p>
 </div>
 </section>
@@ -560,17 +558,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>C. Exclude A Month with Zero Input</span>
-<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Targets feeders that recorded zero input energy (<code>Input Energy = 0 MWh</code>) in one or more months of the reporting period April–September 2026 (Flag bit 4), typically indicating metering failure or unmetered supply.</p>
-<p><strong>Selecting the Checkbox:</strong> Excludes feeders that experienced zero input in any month from the active population.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Includes all feeders in progressive totals as recorded.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>D. Include PTW Connections</span>
+<span>C. Include PTW Connections</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount (₹38,126.98 Cr), total feeders (26,033), Input Energy (79,974.61 MU), Sold Energy (50,155.59 MU), and Line Loss remain strictly <strong>INVARIANT</strong>.</p>
@@ -580,7 +568,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>E. Include Govt Connections</span>
+<span>D. Include Govt Connections</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Governs government consumer categories (Public Water Works LMV-3, Institutions/Govt Offices LMV-4A, and Street Lights LMV-7) where assessment has deemed revenue backing.</p>
@@ -590,7 +578,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>F. Exclude CDF Bills</span>
+<span>E. Exclude CDF Bills</span>
 <span class="tag-badge" style="font-size: 10px;">Energy &amp; Assessment Adjustment Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Adjusts for Defective / Change-of-Defective (CDF) consumer bills and extreme consumption/assessment outliers (&gt;1,500 units/kW or &gt;₹10,000/kW).</p>
@@ -600,7 +588,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>G. Include Subsidy</span>
+<span>F. Include Subsidy</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Incorporates State Government Subsidies (Tariff Subsidy, Powerloom Subsidy, and PTW Subsidy, excluding Cross Subsidy) into total energy revenue billing and realization under 100% statutory government deemed backing.</p>
@@ -647,17 +635,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>C. Exclude A Month with Zero Input</span>
-<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Targets feeders that recorded zero input energy (<code>Input Energy = 0 MWh</code>) in one or more months of the reporting period April–September 2026 (Flag bit 4), typically indicating metering failure or unmetered supply.</p>
-<p><strong>Selecting the Checkbox:</strong> Excludes feeders that experienced zero input in any month from the active population.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Includes all feeders in progressive totals as recorded.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>D. Include PTW Connections</span>
+<span>C. Include PTW Connections</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount (₹38,126.98 Cr), total feeders (26,033), Input Energy (79,974.61 MU), Sold Energy (50,155.59 MU), and Line Loss remain strictly <strong>INVARIANT</strong>.</p>
@@ -667,7 +645,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>E. Include Govt Connections</span>
+<span>D. Include Govt Connections</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Governs government consumer categories (Public Water Works LMV-3, Institutions/Govt Offices LMV-4A, and Street Lights LMV-7) where assessment has deemed revenue backing.</p>
@@ -677,7 +655,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>F. Exclude CDF Bills</span>
+<span>E. Exclude CDF Bills</span>
 <span class="tag-badge" style="font-size: 10px;">Energy &amp; Assessment Adjustment Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Adjusts for Defective / Change-of-Defective (CDF) consumer bills and extreme consumption/assessment outliers (&gt;1,500 units/kW or &gt;₹10,000/kW).</p>
@@ -687,7 +665,7 @@
 
 <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
 <h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>G. Include Subsidy</span>
+<span>F. Include Subsidy</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Filter</span>
 </h4>
 <p><strong>Implemented Rule:</strong> Incorporates State Government Subsidies (Tariff Subsidy, Powerloom Subsidy, and PTW Subsidy, excluding Cross Subsidy) into total energy revenue billing and realization under 100% statutory government deemed backing.</p>
@@ -740,5 +718,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261015_141500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261015_141500"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261015_144000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261015_144000"></script></body>
 </html>
