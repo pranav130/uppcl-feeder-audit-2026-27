@@ -2048,6 +2048,11 @@ function renderProgressiveSummaryChart(groups) {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 250 },
+    interaction: {
+      mode: 'index',
+      axis: 'y',
+      intersect: false
+    },
     plugins: {
       legend: {
         position: 'top',
@@ -2062,6 +2067,7 @@ function renderProgressiveSummaryChart(groups) {
       },
       tooltip: {
         mode: 'index',
+        axis: 'y',
         intersect: false,
         backgroundColor: isDark ? '#1a1f27' : '#141a22',
         titleColor: '#ffffff',
@@ -2073,18 +2079,21 @@ function renderProgressiveSummaryChart(groups) {
         callbacks: {
           title: items => {
             if (!items || !items.length) return '';
-            const e = entities[items[0].dataIndex];
-            return `${e.label} · ${e.feeders.toLocaleString('en-IN')} feeders`;
+            const idx = items[0].dataIndex !== undefined ? items[0].dataIndex : items[0].index;
+            const e = entities[idx];
+            return e ? `${e.label} · ${e.feeders.toLocaleString('en-IN')} feeders` : '';
           },
           label: c => {
-            const cnt = c.dataset._counts[c.dataIndex] || 0;
-            const tot = sums[c.dataIndex] || 0;
+            const idx = c.dataIndex !== undefined ? c.dataIndex : c.index;
+            const cnt = c.dataset._counts ? c.dataset._counts[idx] : (c.raw || 0);
+            const tot = sums[idx] || 0;
             const pct = tot ? (cnt * 100 / tot).toFixed(1) : '0.0';
             return ` ${c.dataset.label}: ${cnt.toLocaleString('en-IN')} (${pct}%)`;
           },
           footer: items => {
             if (!items || !items.length) return '';
-            const e = entities[items[0].dataIndex];
+            const idx = items[0].dataIndex !== undefined ? items[0].dataIndex : items[0].index;
+            const e = entities[idx];
             if (zoneView || !e || e.isTotal) return '';
             return '👉 Click bar to view zones';
           }
@@ -2125,7 +2134,8 @@ function renderProgressiveSummaryChart(groups) {
     },
     onClick: (evt, els) => {
       if (!els || !els.length || zoneView) return;
-      const e = entities[els[0].index];
+      const idx = els[0].index !== undefined ? els[0].index : els[0].dataIndex;
+      const e = entities[idx];
       if (!e || e.isTotal) return;
       state.psChartFocus = e.discom;
       // Defer the re-render with setTimeout to avoid Chart.js error inside its own click handler
@@ -2137,7 +2147,8 @@ function renderProgressiveSummaryChart(groups) {
     },
     onHover: (evt, els) => {
       const chartCanvas = evt.chart?.canvas || evt.native?.target;
-      const clickable = !zoneView && els && els.length && entities[els[0].index] && !entities[els[0].index].isTotal;
+      const idx = els && els.length ? (els[0].index !== undefined ? els[0].index : els[0].dataIndex) : -1;
+      const clickable = !zoneView && idx >= 0 && entities[idx] && !entities[idx].isTotal;
       if (chartCanvas) {
         chartCanvas.style.cursor = clickable ? 'pointer' : 'default';
       }
