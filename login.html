@@ -32,6 +32,18 @@
     --crit: #f08a82;
     --crit-bg: #3b1a18;
   }
+  [data-theme="midnight"] {
+    --bg: #070d18;
+    --surface: #0e1726;
+    --ink: #f0f6fc;
+    --ink-2: #9db0cb;
+    --ink-3: #627694;
+    --line: #1b2a47;
+    --accent: #38bdf8;
+    --accent-soft: #0f2847;
+    --crit: #f87171;
+    --crit-bg: #351115;
+  }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -257,7 +269,7 @@
 </head>
 <body>
 
-<button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme (Light / Dark / Midnight)">🌙</button>
 
 <div class="card" id="loginCard">
 
@@ -408,16 +420,39 @@ async function verifyDekBytes(dekBytes) {
 const html = document.documentElement;
 const themeBtn = document.getElementById('themeToggle');
 
-const savedTheme = localStorage.getItem('uppcl_theme') || 'light';
-html.setAttribute('data-theme', savedTheme);
-themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+function getThemeMeta(theme) {
+  switch (theme) {
+    case 'dark':
+      return { icon: '🌌', title: 'Theme: Dark (Click for Midnight)', next: 'midnight' };
+    case 'midnight':
+      return { icon: '☀️', title: 'Theme: Midnight (Click for Light)', next: 'light' };
+    default:
+      return { icon: '🌙', title: 'Theme: Light (Click for Dark)', next: 'dark' };
+  }
+}
 
-themeBtn.addEventListener('click', () => {
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('uppcl_theme', next);
-  themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
-});
+function applyTheme(theme) {
+  const validTheme = (theme === 'dark' || theme === 'midnight') ? theme : 'light';
+  html.setAttribute('data-theme', validTheme);
+  localStorage.setItem('uppcl_theme', validTheme);
+  localStorage.setItem('theme', validTheme);
+  if (themeBtn) {
+    const meta = getThemeMeta(validTheme);
+    themeBtn.textContent = meta.icon;
+    themeBtn.title = meta.title;
+  }
+}
+
+const savedTheme = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme') || 'light';
+applyTheme(savedTheme);
+
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme') || 'light';
+    const meta = getThemeMeta(cur);
+    applyTheme(meta.next);
+  });
+}
 
 // ── Password show/hide ────────────────────────────────────────
 document.getElementById('togglePwd').addEventListener('click', () => {

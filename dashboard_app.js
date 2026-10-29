@@ -86,18 +86,39 @@ window.onFilterOptionChanged = function(el) {
 // ── Theme Management & Sign Out ──
 (function() {
   const toggleBtn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  document.documentElement.setAttribute('data-theme', saved);
-  if (toggleBtn) toggleBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+  function getThemeMeta(theme) {
+    switch (theme) {
+      case 'dark':
+        return { icon: '🌌', title: 'Theme: Dark (Click for Midnight)', next: 'midnight' };
+      case 'midnight':
+        return { icon: '☀️', title: 'Theme: Midnight (Click for Light)', next: 'light' };
+      default:
+        return { icon: '🌙', title: 'Theme: Light (Click for Dark)', next: 'dark' };
+    }
+  }
+
+  function applyTheme(theme) {
+    const validTheme = (theme === 'dark' || theme === 'midnight') ? theme : 'light';
+    document.documentElement.setAttribute('data-theme', validTheme);
+    localStorage.setItem('uppcl_theme', validTheme);
+    localStorage.setItem('theme', validTheme);
+    if (toggleBtn) {
+      const meta = getThemeMeta(validTheme);
+      toggleBtn.textContent = meta.icon;
+      toggleBtn.title = meta.title;
+    }
+  }
+
+  const rawSaved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme');
+  const initialTheme = rawSaved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(initialTheme);
 
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme') || 'light';
-      const next = cur === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('uppcl_theme', next);
-      localStorage.setItem('theme', next);
-      toggleBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+      const meta = getThemeMeta(cur);
+      applyTheme(meta.next);
       updateAllChartThemes();
     });
   }
@@ -332,12 +353,16 @@ function initCharts() {
 
   chartLineLoss = createSlabBarChart('chartLineLoss', '#2a78d6', 'line_loss');
   chartAtcLoss  = createSlabBarChart('chartAtcLoss',  '#eb6834', 'atc_loss');
+  updateAllChartThemes();
 }
 
 function updateAllChartThemes() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const textCol = isDark ? '#8791a0' : '#7a8494';
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const isDark = theme === 'dark' || theme === 'midnight';
+  const isMidnight = theme === 'midnight';
+
+  const gridCol = isMidnight ? 'rgba(56, 189, 248, 0.08)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+  const textCol = isMidnight ? '#9db0cb' : (isDark ? '#8791a0' : '#7a8494');
 
   [chartMonthlyEnergy, chartMonthlyLoss, chartLineLoss, chartAtcLoss].forEach(c => {
     if (!c) return;
