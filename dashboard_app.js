@@ -166,6 +166,10 @@ const state = {
   wfSortDir: -1,
   collapsedDiscoms: new Set(),
   hBarType: 'line',
+  psChartLoss: 'atc',
+  psChartView: 'discom',
+  psChartMode: 'pct',
+  psChartFocus: '',
   ftBarGroup: 'feederType',
   categorySortCol: 'billableConsumers',
   categorySortDir: -1,
@@ -272,6 +276,7 @@ let chartMonthlyEnergy = null;
 let chartMonthlyLoss = null;
 let chartLineLoss = null;
 let chartAtcLoss = null;
+let chartProgSummary = null;
 
 function initCharts() {
   const ctxME = document.getElementById('chartMonthlyEnergy').getContext('2d');
@@ -370,6 +375,9 @@ function updateAllChartThemes() {
     if (c.options.scales.y) { c.options.scales.y.ticks.color = textCol; c.options.scales.y.grid.color = gridCol; }
     c.update();
   });
+  if (computedResult && computedResult.progressiveSummary) {
+    renderProgressiveSummaryChart(computedResult.progressiveSummary);
+  }
 }
 
 // ── Dataset Provider (AES-256-GCM Encrypted Vault) ──
@@ -1905,7 +1913,291 @@ function renderProgressiveSummaryTable(groups) {
   }
 
   tbody.innerHTML = html || `<tr><td colspan="21" style="text-align:center;padding:20px;color:var(--ink-3)">No matching zones found.</td></tr>`;
+
+  renderProgressiveSummaryChart(groups);
 }
+
+// ── Progressive Summary Chart (100% stacked slab mix by Discom / Zone) ──
+const PS_SLABS = [
+  { key: '0_5',      label: '0-5%',     color: '#1a7f37' },
+  { key: '5_10',     label: '5-10%',    color: '#5aa95f' },
+  { key: '10_20',    label: '10-20%',   color: '#a9c96a' },
+  { key: '20_30',    label: '20-30%',   color: '#f2c94c' },
+  { key: '30_50',    label: '30-50%',   color: '#f2994a' },
+  { key: '50_70',    label: '50-70%',   color: '#e0603a' },
+  { key: 'above_70', label: '>70%',     color: '#b3261e' },
+  { key: 'abnormal', label: 'Abnormal', color: '#8e9aa8' }
+];
+const PS_DISCOM_ORDER = ['PASCHIMANCHAL', 'DAKSHINANCHAL', 'MADHYANCHAL', 'POORVANCHAL', 'KESCO'];
+
+function renderProgressiveSummaryChart(groups) {
+  const canvas = document.getElementById('chartProgressiveSummary');
+  if (!canvas || !groups || typeof Chart === 'undefined') return;
+
+  const loss = state.psChartLoss === 'line' ? 'line' : 'atc';
+  const isPct = state.psChartMode !== 'count';
+  const search = (state.tableSearch || '').trim().toLowerCase();
+  const selectedZoneUpper = (state.zone || '').trim().toUpperCase();
+
+  // Same filtering as the summary table
+  let rows = [...groups];
+  if (selectedZoneUpper) {
+    rows = rows.filter(r => r.zone && r.zone.trim().toUpperCase() === selectedZoneUpper);
+  }
+  if (search) {
+    rows = rows.filter(r =>
+      (r.discom && r.discom.toLowerCase().includes(search)) ||
+      (r.zone && r.zone.toLowerCase().includes(search))
+    );
+  }
+
+  const dRank = d => { const i = PS_DISCOM_ORDER.indexOf(d); return i >= 0 ? i : 99; };
+  const slabCols = PS_SLABS.map(s => `${loss}_${s.key}`);
+
+  // Decide entities to plot
+  const focus = state.psChartFocus;
+  const zoneView = state.psChartView === 'zone' || !!focus || !!selectedZoneUpper;
+  let entities = [];
+
+  if (zoneView) {
+    let zr = focus ? rows.filter(r => r.discom === focus) : rows;
+    zr = [...zr].sort((a, b) => dRank(a.discom) - dRank(b.discom) || (a.zone || '').localeCompare(b.zone || ''));
+    entities = zr.map(r => ({
+      label: focus ? r.zone : `${r.zone} (${(r.discom || '').slice(0, 4)})`,
+      discom: r.discom,
+      isTotal: false,
+      vals: slabCols.map(c => Number(r[c]) || 0),
+      feeders: Number(r.total_feeders) || 0
+    }));
+  } else {
+    const map = new Map();
+    rows.forEach(r => {
+      if (!map.has(r.discom)) {
+        map.set(r.discom, {
+          label: r.discom,
+          discom: r.discom,
+          isTotal: false,
+          vals: new Array(PS_SLABS.length).fill(0),
+          feeders: 0
+        });
+      }
+      const e = map.get(r.discom);
+      slabCols.forEach((c, i) => { e.vals[i] += Number(r[c]) || 0; });
+      e.feeders += Number(r.total_feeders) || 0;
+    });
+    entities = [...map.values()].sort((a, b) => dRank(a.discom) - dRank(b.discom));
+    if (entities.length > 1 && !state.discom && !selectedZoneUpper) {
+      entities.push({
+        label: 'UPPCL (Statewide)',
+        discom: '',
+        isTotal: true,
+        vals: PS_SLABS.map((_, i) => entities.reduce((s, e) => s + e.vals[i], 0)),
+        feeders: entities.reduce((s, e) => s + e.feeders, 0)
+      });
+    }
+  }
+
+  const sums = entities.map(e => e.vals.reduce((a, b) => a + b, 0));
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const borderSepCol = isDark ? 'rgba(26, 31, 39, 0.8)' : 'rgba(255, 255, 255, 0.7)';
+
+  const datasets = PS_SLABS.map((s, i) => ({
+    label: s.label,
+    backgroundColor: s.color,
+    borderColor: borderSepCol,
+    borderWidth: { right: 1, top: 0, bottom: 0, left: 0 },
+    data: entities.map((e, k) => isPct ? (sums[k] ? +(e.vals[i] * 100 / sums[k]).toFixed(2) : 0) : e.vals[i]),
+    _counts: entities.map(e => e.vals[i]),
+    barPercentage: 0.82,
+    categoryPercentage: 0.9
+  }));
+
+  // Size the container dynamically to the number of bars
+  const wrap = document.getElementById('psChartWrap');
+  if (wrap) {
+    wrap.style.height = `${Math.max(260, entities.length * 32 + 90)}px`;
+  }
+
+  // Header hint + back button
+  const hint = document.getElementById('psChartHint');
+  const periodText = state.monthTo ? `Progressive Upto ${state.monthTo}-26` : 'Progressive';
+  const lossName = loss === 'atc' ? 'AT&C' : 'Line';
+  const metricName = isPct ? 'Share of feeders' : 'Number of feeders';
+
+  if (hint) {
+    if (focus) {
+      hint.textContent = `${focus} — Zone-wise ${lossName} loss slab mix (${periodText})`;
+    } else if (zoneView) {
+      hint.textContent = `${metricName} in each ${lossName} loss slab by Zone (${periodText})`;
+    } else {
+      hint.textContent = `${metricName} in each ${lossName} loss slab (${periodText}) · Click a Discom bar to see its zones`;
+    }
+  }
+
+  const back = document.getElementById('psChartBack');
+  if (back) {
+    back.style.display = focus ? 'inline-flex' : 'none';
+  }
+
+  const gridCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const textCol = isDark ? '#b3bcc9' : '#4d5766';
+  const boldTextCol = isDark ? '#eef1f5' : '#141a22';
+
+  const opts = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 250 },
+    plugins: {
+      legend: {
+        position: 'top',
+        align: 'center',
+        labels: {
+          boxWidth: 12,
+          boxHeight: 12,
+          padding: 14,
+          color: textCol,
+          font: { family: '"IBM Plex Sans", system-ui, -apple-system, sans-serif', size: 11, weight: '500' }
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: isDark ? '#1a1f27' : '#141a22',
+        titleColor: '#ffffff',
+        bodyColor: '#eef1f5',
+        borderColor: isDark ? '#2c333e' : '#4d5766',
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 6,
+        callbacks: {
+          title: items => {
+            if (!items || !items.length) return '';
+            const e = entities[items[0].dataIndex];
+            return `${e.label} · ${e.feeders.toLocaleString('en-IN')} feeders`;
+          },
+          label: c => {
+            const cnt = c.dataset._counts[c.dataIndex] || 0;
+            const tot = sums[c.dataIndex] || 0;
+            const pct = tot ? (cnt * 100 / tot).toFixed(1) : '0.0';
+            return ` ${c.dataset.label}: ${cnt.toLocaleString('en-IN')} (${pct}%)`;
+          },
+          footer: items => {
+            if (!items || !items.length) return '';
+            const e = entities[items[0].dataIndex];
+            if (zoneView || !e || e.isTotal) return '';
+            return '👉 Click bar to view zones';
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        min: 0,
+        max: isPct ? 100 : undefined,
+        grid: { color: gridCol },
+        ticks: {
+          color: textCol,
+          font: { family: '"IBM Plex Sans", system-ui, -apple-system, sans-serif', size: 11 },
+          callback: v => isPct ? v + '%' : Number(v).toLocaleString('en-IN')
+        }
+      },
+      y: {
+        stacked: true,
+        grid: { display: false },
+        ticks: {
+          color: ctx => {
+            const isTotal = entities[ctx.index] && entities[ctx.index].isTotal;
+            return isTotal ? boldTextCol : textCol;
+          },
+          autoSkip: false,
+          font: ctx => {
+            const isTotal = entities[ctx.index] && entities[ctx.index].isTotal;
+            return {
+              family: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+              size: isTotal ? 11.5 : 11,
+              weight: isTotal ? '700' : '500'
+            };
+          }
+        }
+      }
+    },
+    onClick: (evt, els) => {
+      if (!els || !els.length || zoneView) return;
+      const e = entities[els[0].index];
+      if (!e || e.isTotal) return;
+      state.psChartFocus = e.discom;
+      // Defer the re-render with setTimeout to avoid Chart.js error inside its own click handler
+      setTimeout(() => {
+        if (computedResult) {
+          renderProgressiveSummaryChart(computedResult.progressiveSummary);
+        }
+      }, 0);
+    },
+    onHover: (evt, els) => {
+      const chartCanvas = evt.chart?.canvas || evt.native?.target;
+      const clickable = !zoneView && els && els.length && entities[els[0].index] && !entities[els[0].index].isTotal;
+      if (chartCanvas) {
+        chartCanvas.style.cursor = clickable ? 'pointer' : 'default';
+      }
+    }
+  };
+
+  if (chartProgSummary) {
+    chartProgSummary.destroy();
+  }
+  chartProgSummary = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: entities.map(e => e.label),
+      datasets
+    },
+    options: opts
+  });
+}
+
+function initProgressiveSummaryChartControls() {
+  const bind = (attr, stateKey, after) => {
+    document.querySelectorAll(`[${attr}]`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll(`[${attr}]`).forEach(b => {
+          b.setAttribute('aria-pressed', 'false');
+          b.classList.remove('active');
+        });
+        btn.setAttribute('aria-pressed', 'true');
+        btn.classList.add('active');
+        state[stateKey] = btn.getAttribute(attr);
+        if (after) after();
+        if (computedResult) {
+          renderProgressiveSummaryChart(computedResult.progressiveSummary);
+        }
+      });
+    });
+  };
+  bind('data-ps-loss', 'psChartLoss');
+  bind('data-ps-mode', 'psChartMode');
+  bind('data-ps-view', 'psChartView', () => {
+    state.psChartFocus = '';
+  });
+
+  const back = document.getElementById('psChartBack');
+  if (back) {
+    back.addEventListener('click', () => {
+      state.psChartFocus = '';
+      state.psChartView = 'discom';
+      document.querySelectorAll('[data-ps-view]').forEach(b => {
+        const isDisc = b.getAttribute('data-ps-view') === 'discom';
+        b.setAttribute('aria-pressed', isDisc ? 'true' : 'false');
+        if (isDisc) b.classList.add('active'); else b.classList.remove('active');
+      });
+      if (computedResult) {
+        renderProgressiveSummaryChart(computedResult.progressiveSummary);
+      }
+    });
+  }
+}
+
 
 window.toggleDiscomGroup = function(discom) {
   if (state.collapsedDiscoms.has(discom)) {
@@ -2211,6 +2503,26 @@ function resetFilters() {
   document.getElementById('fMonthTo').value = 'Sep';
   document.getElementById('fSearch').value = '';
   document.getElementById('tSearch').value = '';
+  // Reset psChart controls
+  state.psChartFocus = '';
+  state.psChartLoss = 'atc';
+  state.psChartView = 'discom';
+  state.psChartMode = 'pct';
+  document.querySelectorAll('[data-ps-loss]').forEach(b => {
+    const isAtc = b.getAttribute('data-ps-loss') === 'atc';
+    b.setAttribute('aria-pressed', isAtc ? 'true' : 'false');
+    if (isAtc) b.classList.add('active'); else b.classList.remove('active');
+  });
+  document.querySelectorAll('[data-ps-view]').forEach(b => {
+    const isDisc = b.getAttribute('data-ps-view') === 'discom';
+    b.setAttribute('aria-pressed', isDisc ? 'true' : 'false');
+    if (isDisc) b.classList.add('active'); else b.classList.remove('active');
+  });
+  document.querySelectorAll('[data-ps-mode]').forEach(b => {
+    const isPct = b.getAttribute('data-ps-mode') === 'pct';
+    b.setAttribute('aria-pressed', isPct ? 'true' : 'false');
+    if (isPct) b.classList.add('active'); else b.classList.remove('active');
+  });
   document.getElementById('chkAbnormal').checked = false;
   document.getElementById('chkBilledGtInput').checked = false;
   const cPtw = document.getElementById('chkIncludePtw'); if (cPtw) cPtw.checked = false;
@@ -2885,6 +3197,7 @@ async function checkHealth() {
 (async function boot() {
   checkHealth();
   initCharts();
+  initProgressiveSummaryChartControls();
   await loadDataset();
   syncCascadeDropdowns();
   onFilterChanged();

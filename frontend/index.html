@@ -512,6 +512,34 @@
 </table>
 </div>
 </section>
+<!-- ── PROGRESSIVE SUMMARY CHART (DISCOM & ZONE SLAB MIX) ── -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📊 Progressive Summary — Slab Mix by Discom &amp; Zone</h2>
+<p class="hint" id="psChartHint">Share of feeders in each loss slab · Click a Discom bar to see its zones</p>
+</div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+<div class="seg" role="group" aria-label="Loss metric">
+<button aria-pressed="true" class="active" data-ps-loss="atc" type="button">AT&amp;C</button>
+<button aria-pressed="false" data-ps-loss="line" type="button">Line</button>
+</div>
+<div class="seg" role="group" aria-label="Grouping level">
+<button aria-pressed="true" class="active" data-ps-view="discom" type="button">Discoms</button>
+<button aria-pressed="false" data-ps-view="zone" type="button">Zones</button>
+</div>
+<div class="seg" role="group" aria-label="Display mode">
+<button aria-pressed="true" class="active" data-ps-mode="pct" type="button">% Share</button>
+<button aria-pressed="false" data-ps-mode="count" type="button">Count</button>
+</div>
+<button class="btn" id="psChartBack" style="display:none;padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:600;" type="button">← All Discoms</button>
+</div>
+</div>
+<div id="psChartWrap" style="position:relative;height:320px;width:100%;">
+<canvas id="chartProgressiveSummary"></canvas>
+</div>
+</section>
+
 <!-- ── CALCULATION NOTES & DATA QUALITY ── -->
 <section class="panel">
 <button class="notes-toggle" id="notesToggle" type="button">
@@ -718,5 +746,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261015_144000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261015_144000"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261015_144000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261029_132000"></script></body>
 </html>
