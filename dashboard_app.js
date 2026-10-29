@@ -1929,6 +1929,28 @@ const PS_SLABS = [
   { key: 'abnormal', label: 'Abnormal', color: '#8e9aa8' }
 ];
 const PS_DISCOM_ORDER = ['PASCHIMANCHAL', 'DAKSHINANCHAL', 'MADHYANCHAL', 'POORVANCHAL', 'KESCO'];
+const PS_DISCOM_SHORT = {
+  'PASCHIMANCHAL': 'PV',
+  'DAKSHINANCHAL': 'DV',
+  'MADHYANCHAL': 'MV',
+  'POORVANCHAL': 'PuV',
+  'KESCO': 'Ksco',
+  'PVVNL': 'PV',
+  'DVVNL': 'DV',
+  'MVVNL': 'MV',
+  'PUVVNL': 'PuV'
+};
+const getPsDiscomShort = d => {
+  if (!d) return '';
+  const u = d.trim().toUpperCase();
+  if (PS_DISCOM_SHORT[u]) return PS_DISCOM_SHORT[u];
+  if (u.includes('POORV') || u.includes('PURV') || u.includes('PUV')) return 'PuV';
+  if (u.includes('PASCHIM') || u.includes('PVV')) return 'PV';
+  if (u.includes('MADHYA') || u.includes('MVV')) return 'MV';
+  if (u.includes('DAKSHIN') || u.includes('DVV')) return 'DV';
+  if (u.includes('KESCO')) return 'Ksco';
+  return u.slice(0, 4);
+};
 
 function renderProgressiveSummaryChart(groups) {
   const canvas = document.getElementById('chartProgressiveSummary');
@@ -1963,7 +1985,7 @@ function renderProgressiveSummaryChart(groups) {
     let zr = focus ? rows.filter(r => r.discom === focus) : rows;
     zr = [...zr].sort((a, b) => dRank(a.discom) - dRank(b.discom) || (a.zone || '').localeCompare(b.zone || ''));
     entities = zr.map(r => ({
-      label: focus ? r.zone : `${r.zone} (${(r.discom || '').slice(0, 4)})`,
+      label: focus ? r.zone : `${r.zone} (${getPsDiscomShort(r.discom)})`,
       discom: r.discom,
       isTotal: false,
       vals: slabCols.map(c => Number(r[c]) || 0),
