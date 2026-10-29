@@ -350,9 +350,9 @@ function updateAllChartThemes() {
     if (c.options.scales.y) { c.options.scales.y.ticks.color = textCol; c.options.scales.y.grid.color = gridCol; }
     c.update();
   });
-  if (computedResult && computedResult.progressiveSummary) {
-    renderProgressiveSummaryChart(computedResult.progressiveSummary);
-  }
+  // if (computedResult && computedResult.progressiveSummary) {
+  //   renderProgressiveSummaryChart(computedResult.progressiveSummary);
+  // }
 }
 
 // ── Dataset Provider (AES-256-GCM Encrypted Vault) ──
@@ -1889,7 +1889,7 @@ function renderProgressiveSummaryTable(groups) {
 
   tbody.innerHTML = html || `<tr><td colspan="21" style="text-align:center;padding:20px;color:var(--ink-3)">No matching zones found.</td></tr>`;
 
-  renderProgressiveSummaryChart(groups);
+  // renderProgressiveSummaryChart(groups); // [Retained for future use]
 }
 
 // ── Progressive Summary Chart (100% stacked slab mix by Discom / Zone) ──
@@ -3205,7 +3205,7 @@ async function checkHealth() {
 (async function boot() {
   checkHealth();
   initCharts();
-  initProgressiveSummaryChartControls();
+  // initProgressiveSummaryChartControls(); // [Retained for future use]
   await loadDataset();
   syncCascadeDropdowns();
   onFilterChanged();
