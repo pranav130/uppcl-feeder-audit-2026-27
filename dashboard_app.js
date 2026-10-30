@@ -2307,7 +2307,11 @@ function renderChips() {
   if (state.area) chips.push({ label: `Area: ${state.area}`, clear: () => { state.area = ''; document.getElementById('fArea').value = ''; } });
   if (state.feederType) chips.push({ label: `Type: ${state.feederType}`, clear: () => { state.feederType = ''; document.getElementById('fFeederType').value = ''; } });
   if (state.monthFrom !== 'Apr' || state.monthTo !== 'Sep') {
-    chips.push({ label: `Months: ${state.monthFrom}–${state.monthTo} 2026`, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Sep'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Sep'; } });
+    const isSingle = state.monthFrom === state.monthTo;
+    const mLabel = isSingle
+      ? `📅 Single Month: ${state.monthFrom} 2026`
+      : (state.monthFrom === 'Apr' ? `📈 Progressive: Apr to ${state.monthTo} 2026` : `📈 Progressive: ${state.monthFrom} to ${state.monthTo} 2026`);
+    chips.push({ label: mLabel, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Sep'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Sep'; } });
   }
   if (state.search) chips.push({ label: `Search: "${state.search}"`, clear: () => { state.search = ''; document.getElementById('fSearch').value = ''; } });
   if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
