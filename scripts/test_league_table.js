@@ -70,7 +70,7 @@ console.log('calculateMetrics evaluated successfully!');
 
 const res = calculateMetrics();
 console.log('Used feeders count:', res.usedFeeders.length);
-console.assert(res.usedFeeders.length === 26237, `Expected 26237 feeders, got ${res.usedFeeders.length}`);
+console.assert(res.usedFeeders.length === 26310, `Expected 26310 feeders, got ${res.usedFeeders.length}`);
 
 // Test aggregation for all 5 levels
 ['discom', 'zone', 'circle', 'division', 'substation'].forEach(level => {
@@ -105,7 +105,7 @@ console.assert(res.usedFeeders.length === 26237, `Expected 26237 feeders, got ${
   }
 
   console.log(`Level: ${level.padEnd(10)} | Groups: ${String(groups.size).padStart(5)} | Feeders: ${totFeeders} | Input MU: ${(totIE/1000).toFixed(2)} | Fdrs>70%: ${tot70}`);
-  console.assert(totFeeders === 26237, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
+  console.assert(totFeeders === 26310, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
 
 });
 

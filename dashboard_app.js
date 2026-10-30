@@ -676,7 +676,7 @@ function calculateMetrics() {
     if (fIE > 0 && cons > 0 && !(flags & 8)) auditedCount++;
 
     const be = fIE > 0 ? (fSE / fIE) * 100 : null;
-    const ce = fAss > 0 ? (fReal / fAss) * 100 : (fReal > 0 ? 100 : null);
+    const ce = fAss > 0 ? (fReal / fAss) * 100 : 100.0;
     const ll = be !== null ? 100 - be : null;
     const atc = (be !== null && ce !== null) ? 100 - (be * ce / 100) : null;
 

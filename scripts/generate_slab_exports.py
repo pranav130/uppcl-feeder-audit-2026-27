@@ -78,9 +78,9 @@ for r in R:
     is_ptw = 1 if (flags & 16) else 0
 
     be = (f_se / f_ie * 100.0) if f_ie > 0 else None
-    ce = (f_real / f_ass * 100.0) if f_ass > 0 else (100.0 if f_real > 0 else None)
+    ce = (f_real / f_ass * 100.0) if f_ass > 0 else 100.0
     ll = (100.0 - be) if be is not None else None
-    atc = (100.0 - (be * ce / 100.0)) if (be is not None and ce is not None) else None
+    atc = (100.0 - (be * ce / 100.0)) if be is not None else None
 
     line_slab = classify_slab(ll, f_ie, cons, flags, False)
     atc_slab  = classify_slab(atc, f_ie, cons, flags, True)
