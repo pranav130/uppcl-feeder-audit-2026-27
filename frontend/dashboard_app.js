@@ -86,18 +86,39 @@ window.onFilterOptionChanged = function(el) {
 // ── Theme Management & Sign Out ──
 (function() {
   const toggleBtn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  document.documentElement.setAttribute('data-theme', saved);
-  if (toggleBtn) toggleBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+  function getThemeMeta(theme) {
+    switch (theme) {
+      case 'dark':
+        return { icon: '🌌', title: 'Theme: Dark (Click for Midnight)', next: 'midnight' };
+      case 'midnight':
+        return { icon: '☀️', title: 'Theme: Midnight (Click for Light)', next: 'light' };
+      default:
+        return { icon: '🌙', title: 'Theme: Light (Click for Dark)', next: 'dark' };
+    }
+  }
+
+  function applyTheme(theme) {
+    const validTheme = (theme === 'dark' || theme === 'midnight') ? theme : 'light';
+    document.documentElement.setAttribute('data-theme', validTheme);
+    localStorage.setItem('uppcl_theme', validTheme);
+    localStorage.setItem('theme', validTheme);
+    if (toggleBtn) {
+      const meta = getThemeMeta(validTheme);
+      toggleBtn.textContent = meta.icon;
+      toggleBtn.title = meta.title;
+    }
+  }
+
+  const rawSaved = localStorage.getItem('uppcl_theme') || localStorage.getItem('theme');
+  const initialTheme = rawSaved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(initialTheme);
 
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme') || 'light';
-      const next = cur === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('uppcl_theme', next);
-      localStorage.setItem('theme', next);
-      toggleBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+      const meta = getThemeMeta(cur);
+      applyTheme(meta.next);
       updateAllChartThemes();
     });
   }
@@ -143,7 +164,7 @@ const state = {
   top150SortDir: -1,
   wfSortCol: 'atc',
   wfSortDir: -1,
-  collapsedDiscoms: new Set(),
+  expandedDiscoms: new Set(),
   hBarType: 'line',
   psChartLoss: 'atc',
   psChartView: 'discom',
@@ -236,11 +257,11 @@ function thruRatePill(val) {
   return `<span class="pill ${cls}">₹${v.toFixed(2)}</span>`;
 }
 
-function classifySlab(lossPct, ie, cons, flags) {
+function classifySlab(lossPct, ie, cons, flags, isAtc = false) {
   if (ie === 0) return 'IE 0';
   if (cons === 0 || (flags & 8)) return 'No Cons';
   if (lossPct === null || isNaN(lossPct)) return 'Abnormal';
-  if (lossPct < 0 || (flags & 1) || lossPct > 100) return 'Abnormal';
+  if (lossPct < 0 || (!isAtc && (flags & 1)) || lossPct > 100) return 'Abnormal';
   if (lossPct < 5) return '0% to 5%';
   if (lossPct < 10) return '5% to 10%';
   if (lossPct < 20) return '10% to 20%';
@@ -337,12 +358,16 @@ function initCharts() {
 
   chartLineLoss = createSlabBarChart('chartLineLoss', '#2a78d6', 'line_loss');
   chartAtcLoss  = createSlabBarChart('chartAtcLoss',  '#eb6834', 'atc_loss');
+  updateAllChartThemes();
 }
 
 function updateAllChartThemes() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const textCol = isDark ? '#8791a0' : '#7a8494';
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const isDark = theme === 'dark' || theme === 'midnight';
+  const isMidnight = theme === 'midnight';
+
+  const gridCol = isMidnight ? 'rgba(56, 189, 248, 0.08)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+  const textCol = isMidnight ? '#9db0cb' : (isDark ? '#8791a0' : '#7a8494');
 
   [chartMonthlyEnergy, chartMonthlyLoss, chartLineLoss, chartAtcLoss].forEach(c => {
     if (!c) return;
@@ -655,8 +680,8 @@ function calculateMetrics() {
     const ll = be !== null ? 100 - be : null;
     const atc = (be !== null && ce !== null) ? 100 - (be * ce / 100) : null;
 
-    const lineSlab = classifySlab(ll, fIE, cons, flags);
-    const atcSlab  = classifySlab(atc, fIE, cons, flags);
+    const lineSlab = classifySlab(ll, fIE, cons, flags, false);
+    const atcSlab  = classifySlab(atc, fIE, cons, flags, true);
     if (lineSlabs[lineSlab] !== undefined) lineSlabs[lineSlab]++;
     if (atcSlabs[atcSlab] !== undefined) atcSlabs[atcSlab]++;
 
@@ -1835,14 +1860,14 @@ function renderProgressiveSummaryTable(groups) {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
-    const icon = isCollapsed ? '▶' : '▼';
+    const isExpanded = state.expandedDiscoms.has(dName) || Boolean(selectedZoneUpper);
+    const icon = isExpanded ? '▼' : '▶';
 
     // Discom Total row
     html += `
       <tr class="tot">
-        <td class="tx"><span class="toggle-btn" onclick="toggleDiscomGroup('${dName}')">${icon}</span> <b>${dName}</b></td>
-        <td class="tx"><b>${dName} Total</b></td>
+        <td class="tx" onclick="toggleDiscomGroup('${dName}')" style="cursor:pointer;" title="Click to ${isExpanded ? 'fold' : 'unfold'} ${dName}"><span class="toggle-btn">${icon}</span> <b>${dName}</b></td>
+        <td class="tx" onclick="toggleDiscomGroup('${dName}')" style="cursor:pointer;" title="Click to ${isExpanded ? 'fold' : 'unfold'} ${dName}"><b>${dName} Total</b></td>
         <td><b>${fmt(dt.total_feeders)}</b></td>
         <td>${fmt(dt.line_0_5)}</td><td>${fmt(dt.line_5_10)}</td><td>${fmt(dt.line_10_20)}</td><td>${fmt(dt.line_20_30)}</td>
         <td>${fmt(dt.line_30_50)}</td><td>${fmt(dt.line_50_70)}</td><td>${fmt(dt.line_above_70)}</td><td>${fmt(dt.line_abnormal)}</td>
@@ -1853,7 +1878,7 @@ function renderProgressiveSummaryTable(groups) {
     `;
 
     // Zone rows
-    if (!isCollapsed) {
+    if (isExpanded) {
       for (const r of zRows) {
         html += `
           <tr class="drill">
@@ -1888,6 +1913,12 @@ function renderProgressiveSummaryTable(groups) {
   }
 
   tbody.innerHTML = html || `<tr><td colspan="21" style="text-align:center;padding:20px;color:var(--ink-3)">No matching zones found.</td></tr>`;
+
+  const btnToggleLbl = document.getElementById('lblToggleAllDiscoms');
+  if (btnToggleLbl && discomsPresent.length > 0) {
+    const allExpanded = discomsPresent.every(d => state.expandedDiscoms.has(d));
+    btnToggleLbl.textContent = allExpanded ? '▼ Fold All' : '▶ Unfold All';
+  }
 
   // renderProgressiveSummaryChart(groups); // [Retained for future use]
 }
@@ -2208,14 +2239,26 @@ function initProgressiveSummaryChartControls() {
 
 
 window.toggleDiscomGroup = function(discom) {
-  if (state.collapsedDiscoms.has(discom)) {
-    state.collapsedDiscoms.delete(discom);
+  if (state.expandedDiscoms.has(discom)) {
+    state.expandedDiscoms.delete(discom);
   } else {
-    state.collapsedDiscoms.add(discom);
+    state.expandedDiscoms.add(discom);
   }
   if (computedResult) {
     renderProgressiveSummaryTable(computedResult.progressiveSummary);
   }
+};
+
+window.toggleAllDiscoms = function() {
+  if (!computedResult || !computedResult.progressiveSummary) return;
+  const allDiscoms = [...new Set(computedResult.progressiveSummary.map(r => r.discom))];
+  const allExpanded = allDiscoms.length > 0 && allDiscoms.every(d => state.expandedDiscoms.has(d));
+  if (allExpanded) {
+    state.expandedDiscoms.clear();
+  } else {
+    allDiscoms.forEach(d => state.expandedDiscoms.add(d));
+  }
+  renderProgressiveSummaryTable(computedResult.progressiveSummary);
 };
 
 // ── Filter Chips ──
@@ -2437,11 +2480,29 @@ document.getElementById('fSearch').addEventListener('input', function() {
 
 // Table Search (summary table)
 document.getElementById('tSearch').addEventListener('input', function() {
+  const prevSearch = state.tableSearch;
   state.tableSearch = this.value.trim();
+  if (state.tableSearch) {
+    const q = state.tableSearch.toLowerCase();
+    if (computedResult && computedResult.progressiveSummary) {
+      computedResult.progressiveSummary.forEach(r => {
+        if ((r.zone && r.zone.toLowerCase().includes(q)) || (r.discom && r.discom.toLowerCase().includes(q))) {
+          state.expandedDiscoms.add(r.discom);
+        }
+      });
+    }
+  } else if (prevSearch && !state.tableSearch) {
+    state.expandedDiscoms.clear();
+  }
   if (computedResult) {
     renderProgressiveSummaryTable(computedResult.progressiveSummary);
   }
 });
+
+const btnToggleAll = document.getElementById('btnToggleAllDiscoms');
+if (btnToggleAll) {
+  btnToggleAll.addEventListener('click', window.toggleAllDiscoms);
+}
 
 // Horizontal Slab Bar toggle
 document.querySelectorAll('[data-hbar]').forEach(btn => {
@@ -2499,7 +2560,7 @@ function resetFilters() {
   state.top150SortDir = -1;
   state.wfSortCol = 'atc';
   state.wfSortDir = -1;
-  state.collapsedDiscoms.clear();
+  state.expandedDiscoms.clear();
 
   document.getElementById('fDiscom').value = '';
   document.getElementById('fZone').value = '';
@@ -2936,7 +2997,7 @@ function exportProgressiveSummaryCsv() {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
+    const isExpanded = state.expandedDiscoms.has(dName);
 
     // Discom Total row
     csvLines.push([
@@ -2950,8 +3011,9 @@ function exportProgressiveSummaryCsv() {
       dt.ie_zero, dt.no_consumers_tagged
     ].join(','));
 
-    // If expanded, include individual zone rows
-    if (!isCollapsed) {
+    // If expanded or in default view, include individual zone rows
+    const shouldIncludeZones = isExpanded || state.expandedDiscoms.size === 0;
+    if (shouldIncludeZones) {
       for (const r of zRows) {
         csvLines.push([
           escapeVal(r.discom),
@@ -3095,7 +3157,7 @@ function exportProgressiveSummaryXlsx() {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
+    const isExpanded = state.expandedDiscoms.has(dName);
 
     // Discom Total row (Level 0 - Summary Header Row)
     aoa.push([
@@ -3122,7 +3184,7 @@ function exportProgressiveSummaryXlsx() {
         r.atc_30_50, r.atc_50_70, r.atc_above_70, r.atc_abnormal,
         r.ie_zero, r.no_consumers_tagged
       ]);
-      rowConfig.push({ level: 1, hidden: isCollapsed });
+      rowConfig.push({ level: 1, hidden: !isExpanded });
     }
   }
 
@@ -3201,8 +3263,154 @@ async function checkHealth() {
   }
 }
 
+
+// ── Sidebar Navigation & Tab Routing ──
+function initSidebarTabs() {
+  const sidebar = document.getElementById('appSidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const mobileToggle = document.getElementById('sidebarMobileToggle');
+  const overlay = document.getElementById('sidebarMobileOverlay');
+
+  // 1. Sidebar Collapse State
+  const savedCollapsed = localStorage.getItem('uppcl_sidebar_collapsed') === 'true';
+  if (sidebar && savedCollapsed) {
+    sidebar.classList.add('collapsed');
+    if (sidebarToggle) {
+      const icon = sidebarToggle.querySelector('.toggle-icon');
+      const txt = sidebarToggle.querySelector('.toggle-text');
+      if (icon) icon.textContent = '▶';
+      if (txt) txt.textContent = 'Expand';
+    }
+  }
+
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.toggle('collapsed');
+      localStorage.setItem('uppcl_sidebar_collapsed', isCollapsed);
+      const icon = sidebarToggle.querySelector('.toggle-icon');
+      const txt = sidebarToggle.querySelector('.toggle-text');
+      if (icon) icon.textContent = isCollapsed ? '▶' : '◀';
+      if (txt) txt.textContent = isCollapsed ? 'Expand' : 'Collapse';
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 260);
+    });
+  }
+
+  // Mobile drawer toggle
+  if (mobileToggle && sidebar) {
+    mobileToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('mobile-open');
+      if (overlay) overlay.classList.toggle('active', isOpen);
+    });
+  }
+  if (overlay && sidebar) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+    });
+  }
+
+  // 2. Tab Navigation
+  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  const tabContents = document.querySelectorAll('.dashboard-tab-content');
+
+  function activateTab(tabId, updateHash = true) {
+    let matchedItem = null;
+    navItems.forEach(item => {
+      const match = item.dataset.tab === tabId;
+      item.classList.toggle('active', match);
+      if (match) matchedItem = item;
+    });
+
+    tabContents.forEach(content => {
+      content.classList.toggle('active', content.id === tabId);
+    });
+
+    // Close mobile drawer on selection
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+
+    // Update Hash
+    if (updateHash) {
+      const hashMap = {
+        'tabDashboard': '#dashboard',
+        'tabCategory': '#category',
+        'tabCritical': '#critical',
+        'tabProgress': '#progress',
+        'tabDrilldown': '#drilldown'
+      };
+      if (hashMap[tabId]) {
+        history.replaceState(null, '', hashMap[tabId]);
+      }
+    }
+
+    // Handle Chart Resizing and Drilldown Lazy Loading
+    setTimeout(() => {
+      if (tabId === 'tabDashboard') {
+        if (chartMonthlyEnergy) { chartMonthlyEnergy.resize(); chartMonthlyEnergy.update('none'); }
+        if (chartMonthlyLoss) { chartMonthlyLoss.resize(); chartMonthlyLoss.update('none'); }
+      } else if (tabId === 'tabProgress') {
+        if (chartLineLoss) { chartLineLoss.resize(); chartLineLoss.update('none'); }
+        if (chartAtcLoss) { chartAtcLoss.resize(); chartAtcLoss.update('none'); }
+        if (computedResult) {
+          renderFeederTypeBreakdown(computedResult.feederTypeBreakdown);
+        }
+      } else if (tabId === 'tabDrilldown') {
+        initDrilldownIframe();
+      }
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+  }
+
+  window.switchDashboardTab = activateTab;
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const tabId = item.dataset.tab;
+      if (tabId) activateTab(tabId);
+    });
+  });
+
+  // Drilldown Iframe setup
+  function initDrilldownIframe(forceReload = false) {
+    const iframe = document.getElementById('drilldownIframe');
+    if (!iframe) return;
+    const currentSrc = iframe.getAttribute('src');
+    const dParam = state.discom ? `&discom=${encodeURIComponent(state.discom)}` : '';
+    const zParam = state.zone ? `&zone=${encodeURIComponent(state.zone)}` : '';
+    const targetUrl = `feeder_drilldown.html?v=${Date.now()}${dParam}${zParam}`;
+    if (!currentSrc || currentSrc === 'about:blank' || forceReload) {
+      iframe.src = targetUrl;
+    }
+  }
+
+  const btnReloadDrill = document.getElementById('btnReloadDrilldown');
+  if (btnReloadDrill) {
+    btnReloadDrill.addEventListener('click', () => initDrilldownIframe(true));
+  }
+
+  // 3. Initial Route from URL Hash
+  const hashToTab = {
+    '#dashboard': 'tabDashboard',
+    '#category': 'tabCategory',
+    '#critical': 'tabCritical',
+    '#progress': 'tabProgress',
+    '#drilldown': 'tabDrilldown'
+  };
+
+  const initialTab = hashToTab[window.location.hash] || 'tabDashboard';
+  activateTab(initialTab, false);
+
+  window.addEventListener('hashchange', () => {
+    const nextTab = hashToTab[window.location.hash];
+    if (nextTab) activateTab(nextTab, false);
+  });
+}
+
 // ── Initial Boot Sequence ──
 (async function boot() {
+  initSidebarTabs();
   checkHealth();
   initCharts();
   // initProgressiveSummaryChartControls(); // [Retained for future use]

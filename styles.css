@@ -546,7 +546,13 @@ tr.zone-row.hidden { display: none; }
   width: 14px;
   text-align: center;
   user-select: none;
-  color: var(--ink-3);
+  color: var(--ink-2);
+  margin-right: 4px;
+  font-size: 11px;
+  transition: color 0.15s ease;
+}
+tr.tot:hover .toggle-btn {
+  color: var(--primary);
 }
 
 .seg {

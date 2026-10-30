@@ -38,11 +38,11 @@ SLABS = [
     ('No Cons', 'No_Cons')
 ]
 
-def classify_slab(loss_pct, ie, cons, flags):
+def classify_slab(loss_pct, ie, cons, flags, is_atc=False):
     if ie == 0: return 'IE 0'
     if cons == 0 or (flags & 8): return 'No Cons'
     if loss_pct is None: return 'Abnormal'
-    if loss_pct < 0 or (flags & 1) or loss_pct > 100: return 'Abnormal'
+    if loss_pct < 0 or (not is_atc and (flags & 1)) or loss_pct > 100: return 'Abnormal'
     if loss_pct < 5: return '0% to 5%'
     if loss_pct < 10: return '5% to 10%'
     if loss_pct < 20: return '10% to 20%'
@@ -82,8 +82,8 @@ for r in R:
     ll = (100.0 - be) if be is not None else None
     atc = (100.0 - (be * ce / 100.0)) if (be is not None and ce is not None) else None
 
-    line_slab = classify_slab(ll, f_ie, cons, flags)
-    atc_slab  = classify_slab(atc, f_ie, cons, flags)
+    line_slab = classify_slab(ll, f_ie, cons, flags, False)
+    atc_slab  = classify_slab(atc, f_ie, cons, flags, True)
 
     abr = (f_ass * 100.0 / f_se) if f_se > 0 else 0.0
     thru = (f_real * 100.0 / f_ie) if f_ie > 0 else 0.0

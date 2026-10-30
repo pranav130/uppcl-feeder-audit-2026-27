@@ -34,11 +34,11 @@ global.MON_FULL   = ['April', 'May', 'June', 'July', 'August', 'September'];
 global.MON_INDEX  = { Apr: 0, May: 1, Jun: 2, Jul: 3, Aug: 4, Sep: 5 };
 global.SLAB_LABELS = ['0% to 5%', '5% to 10%', '10% to 20%', '20% to 30%', '30% to 50%', '50% to 70%', 'Above 70%', 'Abnormal', 'IE 0', 'No Cons'];
 
-function classifySlab(lossPct, ie, cons, flags) {
+function classifySlab(lossPct, ie, cons, flags, isAtc = false) {
   if (ie === 0) return 'IE 0';
   if (cons === 0 || (flags & 8)) return 'No Cons';
   if (lossPct === null || isNaN(lossPct)) return 'Abnormal';
-  if (lossPct < 0 || (flags & 1) || lossPct > 100) return 'Abnormal';
+  if (lossPct < 0 || (!isAtc && (flags & 1)) || lossPct > 100) return 'Abnormal';
   if (lossPct < 5) return '0% to 5%';
   if (lossPct < 10) return '5% to 10%';
   if (lossPct < 20) return '10% to 20%';

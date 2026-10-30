@@ -164,7 +164,7 @@ const state = {
   top150SortDir: -1,
   wfSortCol: 'atc',
   wfSortDir: -1,
-  collapsedDiscoms: new Set(),
+  expandedDiscoms: new Set(),
   hBarType: 'line',
   psChartLoss: 'atc',
   psChartView: 'discom',
@@ -257,11 +257,11 @@ function thruRatePill(val) {
   return `<span class="pill ${cls}">₹${v.toFixed(2)}</span>`;
 }
 
-function classifySlab(lossPct, ie, cons, flags) {
+function classifySlab(lossPct, ie, cons, flags, isAtc = false) {
   if (ie === 0) return 'IE 0';
   if (cons === 0 || (flags & 8)) return 'No Cons';
   if (lossPct === null || isNaN(lossPct)) return 'Abnormal';
-  if (lossPct < 0 || (flags & 1) || lossPct > 100) return 'Abnormal';
+  if (lossPct < 0 || (!isAtc && (flags & 1)) || lossPct > 100) return 'Abnormal';
   if (lossPct < 5) return '0% to 5%';
   if (lossPct < 10) return '5% to 10%';
   if (lossPct < 20) return '10% to 20%';
@@ -680,8 +680,8 @@ function calculateMetrics() {
     const ll = be !== null ? 100 - be : null;
     const atc = (be !== null && ce !== null) ? 100 - (be * ce / 100) : null;
 
-    const lineSlab = classifySlab(ll, fIE, cons, flags);
-    const atcSlab  = classifySlab(atc, fIE, cons, flags);
+    const lineSlab = classifySlab(ll, fIE, cons, flags, false);
+    const atcSlab  = classifySlab(atc, fIE, cons, flags, true);
     if (lineSlabs[lineSlab] !== undefined) lineSlabs[lineSlab]++;
     if (atcSlabs[atcSlab] !== undefined) atcSlabs[atcSlab]++;
 
@@ -1860,14 +1860,14 @@ function renderProgressiveSummaryTable(groups) {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
-    const icon = isCollapsed ? '▶' : '▼';
+    const isExpanded = state.expandedDiscoms.has(dName) || Boolean(selectedZoneUpper);
+    const icon = isExpanded ? '▼' : '▶';
 
     // Discom Total row
     html += `
       <tr class="tot">
-        <td class="tx"><span class="toggle-btn" onclick="toggleDiscomGroup('${dName}')">${icon}</span> <b>${dName}</b></td>
-        <td class="tx"><b>${dName} Total</b></td>
+        <td class="tx" onclick="toggleDiscomGroup('${dName}')" style="cursor:pointer;" title="Click to ${isExpanded ? 'fold' : 'unfold'} ${dName}"><span class="toggle-btn">${icon}</span> <b>${dName}</b></td>
+        <td class="tx" onclick="toggleDiscomGroup('${dName}')" style="cursor:pointer;" title="Click to ${isExpanded ? 'fold' : 'unfold'} ${dName}"><b>${dName} Total</b></td>
         <td><b>${fmt(dt.total_feeders)}</b></td>
         <td>${fmt(dt.line_0_5)}</td><td>${fmt(dt.line_5_10)}</td><td>${fmt(dt.line_10_20)}</td><td>${fmt(dt.line_20_30)}</td>
         <td>${fmt(dt.line_30_50)}</td><td>${fmt(dt.line_50_70)}</td><td>${fmt(dt.line_above_70)}</td><td>${fmt(dt.line_abnormal)}</td>
@@ -1878,7 +1878,7 @@ function renderProgressiveSummaryTable(groups) {
     `;
 
     // Zone rows
-    if (!isCollapsed) {
+    if (isExpanded) {
       for (const r of zRows) {
         html += `
           <tr class="drill">
@@ -1913,6 +1913,12 @@ function renderProgressiveSummaryTable(groups) {
   }
 
   tbody.innerHTML = html || `<tr><td colspan="21" style="text-align:center;padding:20px;color:var(--ink-3)">No matching zones found.</td></tr>`;
+
+  const btnToggleLbl = document.getElementById('lblToggleAllDiscoms');
+  if (btnToggleLbl && discomsPresent.length > 0) {
+    const allExpanded = discomsPresent.every(d => state.expandedDiscoms.has(d));
+    btnToggleLbl.textContent = allExpanded ? '▼ Fold All' : '▶ Unfold All';
+  }
 
   // renderProgressiveSummaryChart(groups); // [Retained for future use]
 }
@@ -2233,14 +2239,26 @@ function initProgressiveSummaryChartControls() {
 
 
 window.toggleDiscomGroup = function(discom) {
-  if (state.collapsedDiscoms.has(discom)) {
-    state.collapsedDiscoms.delete(discom);
+  if (state.expandedDiscoms.has(discom)) {
+    state.expandedDiscoms.delete(discom);
   } else {
-    state.collapsedDiscoms.add(discom);
+    state.expandedDiscoms.add(discom);
   }
   if (computedResult) {
     renderProgressiveSummaryTable(computedResult.progressiveSummary);
   }
+};
+
+window.toggleAllDiscoms = function() {
+  if (!computedResult || !computedResult.progressiveSummary) return;
+  const allDiscoms = [...new Set(computedResult.progressiveSummary.map(r => r.discom))];
+  const allExpanded = allDiscoms.length > 0 && allDiscoms.every(d => state.expandedDiscoms.has(d));
+  if (allExpanded) {
+    state.expandedDiscoms.clear();
+  } else {
+    allDiscoms.forEach(d => state.expandedDiscoms.add(d));
+  }
+  renderProgressiveSummaryTable(computedResult.progressiveSummary);
 };
 
 // ── Filter Chips ──
@@ -2462,11 +2480,29 @@ document.getElementById('fSearch').addEventListener('input', function() {
 
 // Table Search (summary table)
 document.getElementById('tSearch').addEventListener('input', function() {
+  const prevSearch = state.tableSearch;
   state.tableSearch = this.value.trim();
+  if (state.tableSearch) {
+    const q = state.tableSearch.toLowerCase();
+    if (computedResult && computedResult.progressiveSummary) {
+      computedResult.progressiveSummary.forEach(r => {
+        if ((r.zone && r.zone.toLowerCase().includes(q)) || (r.discom && r.discom.toLowerCase().includes(q))) {
+          state.expandedDiscoms.add(r.discom);
+        }
+      });
+    }
+  } else if (prevSearch && !state.tableSearch) {
+    state.expandedDiscoms.clear();
+  }
   if (computedResult) {
     renderProgressiveSummaryTable(computedResult.progressiveSummary);
   }
 });
+
+const btnToggleAll = document.getElementById('btnToggleAllDiscoms');
+if (btnToggleAll) {
+  btnToggleAll.addEventListener('click', window.toggleAllDiscoms);
+}
 
 // Horizontal Slab Bar toggle
 document.querySelectorAll('[data-hbar]').forEach(btn => {
@@ -2524,7 +2560,7 @@ function resetFilters() {
   state.top150SortDir = -1;
   state.wfSortCol = 'atc';
   state.wfSortDir = -1;
-  state.collapsedDiscoms.clear();
+  state.expandedDiscoms.clear();
 
   document.getElementById('fDiscom').value = '';
   document.getElementById('fZone').value = '';
@@ -2961,7 +2997,7 @@ function exportProgressiveSummaryCsv() {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
+    const isExpanded = state.expandedDiscoms.has(dName);
 
     // Discom Total row
     csvLines.push([
@@ -2975,8 +3011,9 @@ function exportProgressiveSummaryCsv() {
       dt.ie_zero, dt.no_consumers_tagged
     ].join(','));
 
-    // If expanded, include individual zone rows
-    if (!isCollapsed) {
+    // If expanded or in default view, include individual zone rows
+    const shouldIncludeZones = isExpanded || state.expandedDiscoms.size === 0;
+    if (shouldIncludeZones) {
       for (const r of zRows) {
         csvLines.push([
           escapeVal(r.discom),
@@ -3120,7 +3157,7 @@ function exportProgressiveSummaryXlsx() {
   for (const dName of discomsPresent) {
     const dt = discomTotalsMap.get(dName);
     const zRows = filtered.filter(r => r.discom === dName);
-    const isCollapsed = state.collapsedDiscoms.has(dName);
+    const isExpanded = state.expandedDiscoms.has(dName);
 
     // Discom Total row (Level 0 - Summary Header Row)
     aoa.push([
@@ -3147,7 +3184,7 @@ function exportProgressiveSummaryXlsx() {
         r.atc_30_50, r.atc_50_70, r.atc_above_70, r.atc_abnormal,
         r.ie_zero, r.no_consumers_tagged
       ]);
-      rowConfig.push({ level: 1, hidden: isCollapsed });
+      rowConfig.push({ level: 1, hidden: !isExpanded });
     }
   }
 

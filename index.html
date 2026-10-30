@@ -534,10 +534,11 @@
 <div class="ph">
 <div>
 <h2>📋 Progressive Summary — Discoms &amp; Zones</h2>
-<p class="hint">Click column headers to sort · Click ▶ on Discom row to expand/collapse zones</p>
+<p class="hint">Click column headers to sort · Click ▶ on Discom row to unfold/fold zones</p>
 </div>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
 <input id="tSearch" placeholder="Filter table rows..." style="max-width:160px;" type="search"/>
+<button class="btn" id="btnToggleAllDiscoms" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Unfold or Fold all Discom rows" type="button"><span id="lblToggleAllDiscoms">▶ Unfold All</span></button>
 <button class="btn" id="btnExportSummaryXlsx" style="padding:5px 12px;font-size:12px;background:#1d7a3e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="Download native Excel workbook with expandable/collapsible Discom rows" type="button">📊 Export Excel (.xlsx)</button>
 <button class="btn" id="btnExportSummaryTable" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Download plain CSV text file" type="button">⬇ Export CSV</button>
 </div>
@@ -721,5 +722,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_121500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_123500"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_125000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_125000"></script></body>
 </html>
