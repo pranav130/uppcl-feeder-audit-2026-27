@@ -25,7 +25,7 @@
   }
 })();
 </script>
-<link href="styles.css?v=20261030_123000" rel="stylesheet"/>
+<link href="styles.css?v=20261030_123500" rel="stylesheet"/>
 </head>
 <body>
 <div class="app-layout">
@@ -365,66 +365,6 @@
 
 <!-- ── SECTION 2: CATEGORY-WISE SUMMARY ── -->
 <div class="dashboard-tab-content" id="tabCategory" role="tabpanel" aria-labelledby="nav-category">
-<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
-<div class="grid2">
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📊 Line Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
-</div>
-<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartLineLoss"></canvas>
-</div>
-</section>
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📈 AT&amp;C Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
-</div>
-<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartAtcLoss"></canvas>
-</div>
-</section>
-</div>
-
-<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
-<div class="grid2">
-<!-- Line Loss by Category Horizontal Bar -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ Line Loss by Category</h2>
-<p class="hint">Distribution of audited feeders across line loss categories</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
-<button aria-pressed="true" data-hbar="line" type="button">Line</button>
-</div>
-</div>
-<div class="bar-chart" id="hBarContainer"></div>
-</section>
-<!-- AT&C Loss by Feeder Type / Area (NEW) -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ AT&amp;C Loss by Category</h2>
-<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
-<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
-</div>
-</div>
-<div class="bar-chart" id="feederTypeBarContainer"></div>
-</section>
-</div>
-
 <!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE ── -->
 <section class="panel">
 <div class="ph">
@@ -529,6 +469,66 @@
 
 <!-- ── SECTION 4: PROGRESS SUMMARY ── -->
 <div class="dashboard-tab-content" id="tabProgress" role="tabpanel" aria-labelledby="nav-progress">
+<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
+<div class="grid2">
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📊 Line Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartLineLoss"></canvas>
+</div>
+</section>
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📈 AT&amp;C Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartAtcLoss"></canvas>
+</div>
+</section>
+</div>
+
+<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
+<div class="grid2">
+<!-- Line Loss by Category Horizontal Bar -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ Line Loss by Category</h2>
+<p class="hint">Distribution of audited feeders across line loss categories</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
+<button aria-pressed="true" data-hbar="line" type="button">Line</button>
+</div>
+</div>
+<div class="bar-chart" id="hBarContainer"></div>
+</section>
+<!-- AT&C Loss by Feeder Type / Area (NEW) -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ AT&amp;C Loss by Category</h2>
+<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
+<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
+</div>
+</div>
+<div class="bar-chart" id="feederTypeBarContainer"></div>
+</section>
+</div>
+
 <!-- ── PROGRESSIVE SUMMARY TABLE (DISCOM & ZONE ROLLUP) ── -->
 <section class="panel">
 <div class="ph">
@@ -721,5 +721,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_121500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_123000"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_121500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_123500"></script></body>
 </html>

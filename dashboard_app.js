@@ -3313,7 +3313,7 @@ function initSidebarTabs() {
       if (tabId === 'tabDashboard') {
         if (chartMonthlyEnergy) { chartMonthlyEnergy.resize(); chartMonthlyEnergy.update('none'); }
         if (chartMonthlyLoss) { chartMonthlyLoss.resize(); chartMonthlyLoss.update('none'); }
-      } else if (tabId === 'tabCategory') {
+      } else if (tabId === 'tabProgress') {
         if (chartLineLoss) { chartLineLoss.resize(); chartLineLoss.update('none'); }
         if (chartAtcLoss) { chartAtcLoss.resize(); chartAtcLoss.update('none'); }
         if (computedResult) {
