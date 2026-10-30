@@ -671,9 +671,13 @@ function calculateMetrics() {
     }
 
     const cons = r[12];
-    if (fIE === 0) ieZeroCount++;
-    if (cons === 0 || (flags & 8)) noConsCount++;
-    if (fIE > 0 && cons > 0 && !(flags & 8)) auditedCount++;
+    if (fIE === 0) {
+      ieZeroCount++;
+    } else if (cons === 0 || (flags & 8)) {
+      noConsCount++;
+    } else {
+      auditedCount++;
+    }
 
     const be = fIE > 0 ? (fSE / fIE) * 100 : null;
     const ce = fAss > 0 ? (fReal / fAss) * 100 : 100.0;
@@ -715,8 +719,11 @@ function calculateMetrics() {
     }
     const sg = summaryGroups.get(szKey);
     sg.total_feeders++;
-    if (fIE === 0) sg.ie_zero++;
-    if (cons === 0 || (flags & 8)) sg.no_consumers_tagged++;
+    if (fIE === 0) {
+      sg.ie_zero++;
+    } else if (cons === 0 || (flags & 8)) {
+      sg.no_consumers_tagged++;
+    }
 
     const slabToKey = (s, p) => {
       if (s === '0% to 5%') return `${p}_0_5`;
