@@ -25,7 +25,7 @@
   }
 })();
 </script>
-<link href="styles.css?v=20261030_123500" rel="stylesheet"/>
+<link href="styles.css?v=20261030_145500" rel="stylesheet"/>
 </head>
 <body>
 <div class="app-layout">
@@ -533,8 +533,8 @@
 <section class="panel">
 <div class="ph">
 <div>
-<h2>📋 Progressive Summary — Discoms &amp; Zones</h2>
-<p class="hint">Click column headers to sort · Click ▶ on Discom row to unfold/fold zones</p>
+<h2>📋 Progressive Summary — Discoms &amp; Zones <span id="summaryPeriodBadge" class="pill" style="font-size:11px;vertical-align:middle;margin-left:6px;background:var(--accent-soft);color:var(--accent);font-weight:600;">Progressive Upto Sep-26</span></h2>
+<p class="hint" id="summaryTableHint">Feeder count distribution across loss slabs · Click column headers to sort · Click ▶ on Discom row to unfold/fold zones</p>
 </div>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
 <input id="tSearch" placeholder="Filter table rows..." style="max-width:160px;" type="search"/>
@@ -550,8 +550,8 @@
 <th class="tx" data-col="discom" rowspan="2">Discom <span class="sort-ico">↕</span></th>
 <th class="tx" data-col="zone" rowspan="2">Zone <span class="sort-ico">↕</span></th>
 <th data-col="total_feeders" rowspan="2">Feeders <span class="sort-ico">↕</span></th>
-<th colspan="8" style="text-align:center;background:#d9e1f2;color:#1f4e78;border-bottom:1px solid var(--line-2)">LINE LOSS SLAB (Progressive Upto Sep-26)</th>
-<th colspan="8" style="text-align:center;background:#fce4d6;color:#833c0c;border-bottom:1px solid var(--line-2)">AT&amp;C LOSS SLAB (Progressive Upto Sep-26)</th>
+<th id="thLineLossHeader" colspan="8" style="text-align:center;background:#d9e1f2;color:#1f4e78;border-bottom:1px solid var(--line-2)">LINE LOSS SLAB (PROGRESSIVE UPTO SEP-26)</th>
+<th id="thAtcLossHeader" colspan="8" style="text-align:center;background:#fce4d6;color:#833c0c;border-bottom:1px solid var(--line-2)">AT&amp;C LOSS SLAB (PROGRESSIVE UPTO SEP-26)</th>
 <th data-col="ie_zero" rowspan="2">IE 0 <span class="sort-ico">↕</span></th>
 <th data-col="no_consumers_tagged" rowspan="2">No Cons <span class="sort-ico">↕</span></th>
 </tr>

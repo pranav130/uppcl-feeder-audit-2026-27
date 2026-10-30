@@ -1029,3 +1029,47 @@ tr.tot:hover .toggle-btn {
     margin-left: 0 !important;
   }
 }
+
+/* Sticky Left Columns for Progressive Summary Table */
+#summaryTbl th:nth-child(1),
+#summaryTbl td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--surface);
+  min-width: 140px;
+}
+#summaryTbl th:nth-child(2),
+#summaryTbl td:nth-child(2) {
+  position: sticky;
+  left: 140px;
+  z-index: 5;
+  background: var(--surface);
+  min-width: 130px;
+}
+#summaryTbl th:nth-child(3),
+#summaryTbl td:nth-child(3) {
+  position: sticky;
+  left: 270px;
+  z-index: 5;
+  background: var(--surface);
+  min-width: 75px;
+  border-right: 2px solid var(--line-2);
+  box-shadow: 2px 0 5px rgba(0,0,0,0.06);
+}
+#summaryTbl thead tr:first-child th:nth-child(1),
+#summaryTbl thead tr:first-child th:nth-child(2),
+#summaryTbl thead tr:first-child th:nth-child(3) {
+  z-index: 10;
+  background: var(--surface);
+}
+#summaryTbl tr.tot td:nth-child(1),
+#summaryTbl tr.tot td:nth-child(2),
+#summaryTbl tr.tot td:nth-child(3) {
+  background: var(--surface-2);
+}
+#summaryTbl tr.drill:hover td:nth-child(1),
+#summaryTbl tr.drill:hover td:nth-child(2),
+#summaryTbl tr.drill:hover td:nth-child(3) {
+  background: var(--surface-2);
+}

@@ -261,7 +261,7 @@ function classifySlab(lossPct, ie, cons, flags, isAtc = false) {
   if (ie === 0) return 'IE 0';
   if (cons === 0 || (flags & 8)) return 'No Cons';
   if (lossPct === null || isNaN(lossPct)) return 'Abnormal';
-  if (lossPct < 0 || (!isAtc && (flags & 1)) || lossPct > 100) return 'Abnormal';
+  if (lossPct < 0 || lossPct > 100) return 'Abnormal';
   if (lossPct < 5) return '0% to 5%';
   if (lossPct < 10) return '5% to 10%';
   if (lossPct < 20) return '10% to 20%';
@@ -591,8 +591,6 @@ function calculateMetrics() {
     totalScoped++;
 
     const flags = r[13];
-    if (state.excludeBilledGtInput && (flags & 2)) continue;
-
     let fIE = 0, fSE = 0, fAss = 0, fReal = 0;
 
     for (let m = validM0; m <= validM1; m++) {
@@ -633,6 +631,8 @@ function calculateMetrics() {
       fAss += mAss;
       fReal += mReal;
     }
+
+    if (state.excludeBilledGtInput && fSE > fIE) continue;
 
     // Exclude abnormal assessment: ABR > ₹50/kWh OR assessment > ₹100 Lakhs (₹1 Crore) with 0 sold energy
     const feederAbr = fSE > 0 ? (fAss * 100) / fSE : 0;
@@ -1789,6 +1789,26 @@ function renderProgressiveSummaryTable(groups) {
   const search = (state.tableSearch || '').trim().toLowerCase();
   const selectedZoneUpper = (state.zone || '').trim().toUpperCase();
 
+  // Dynamic Period Label for Table Headers and Badge
+  const isSingleMonth = state.monthFrom === state.monthTo;
+  const isYtd = state.monthFrom === 'Apr';
+  let periodTag = '';
+  if (isSingleMonth) {
+    periodTag = `Month: ${state.monthFrom}-26`;
+  } else if (isYtd) {
+    periodTag = state.monthTo === 'Sep' ? 'Progressive Upto Sep-26' : `Progressive Apr to ${state.monthTo}-26`;
+  } else {
+    periodTag = `Period: ${state.monthFrom} to ${state.monthTo}-26`;
+  }
+
+  const thLine = document.getElementById('thLineLossHeader');
+  if (thLine) thLine.textContent = `LINE LOSS SLAB (${periodTag.toUpperCase()})`;
+  const thAtc = document.getElementById('thAtcLossHeader');
+  if (thAtc) thAtc.textContent = `AT&C LOSS SLAB (${periodTag.toUpperCase()})`;
+
+  const badgePeriod = document.getElementById('summaryPeriodBadge');
+  if (badgePeriod) badgePeriod.textContent = periodTag;
+
   // Filter groups
   let filtered = [...groups];
 
@@ -1920,6 +1940,12 @@ function renderProgressiveSummaryTable(groups) {
   }
 
   tbody.innerHTML = html || `<tr><td colspan="21" style="text-align:center;padding:20px;color:var(--ink-3)">No matching zones found.</td></tr>`;
+
+  const hintEl = document.getElementById('summaryTableHint');
+  if (hintEl) {
+    const totalCount = grandTotal.total_feeders > 0 ? fmt(grandTotal.total_feeders) : '26,237';
+    hintEl.innerHTML = `Feeder count distribution across loss slabs for <b>${periodTag}</b> (${totalCount} total feeders) · Click column headers to sort · Click ▶ on Discom row to unfold/fold zones`;
+  }
 
   const btnToggleLbl = document.getElementById('lblToggleAllDiscoms');
   if (btnToggleLbl && discomsPresent.length > 0) {
@@ -3132,11 +3158,15 @@ function exportProgressiveSummaryXlsx() {
     });
   }
 
+  const isSingleMonth = state.monthFrom === state.monthTo;
+  const isYtd = state.monthFrom === 'Apr';
+  const periodTag = isSingleMonth ? `Month: ${state.monthFrom}-26` : (isYtd ? (state.monthTo === 'Sep' ? 'Progressive Upto Sep-26' : `Progressive Apr to ${state.monthTo}-26`) : `Period: ${state.monthFrom} to ${state.monthTo}-26`);
+
   // 2-tier headers matching dashboard
   const headerRow1 = [
     'Discom', 'Zone / Rollup', 'Total Feeders',
-    `LINE LOSS SLAB (Progressive Upto ${state.monthTo}-26)`, '', '', '', '', '', '', '',
-    `AT&C LOSS SLAB (Progressive Upto ${state.monthTo}-26)`, '', '', '', '', '', '', '',
+    `LINE LOSS SLAB (${periodTag})`, '', '', '', '', '', '', '',
+    `AT&C LOSS SLAB (${periodTag})`, '', '', '', '', '', '', '',
     'IE 0', 'No Consumers Tagged'
   ];
 
