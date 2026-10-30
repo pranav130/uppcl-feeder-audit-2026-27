@@ -3226,8 +3226,154 @@ async function checkHealth() {
   }
 }
 
+
+// ── Sidebar Navigation & Tab Routing ──
+function initSidebarTabs() {
+  const sidebar = document.getElementById('appSidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const mobileToggle = document.getElementById('sidebarMobileToggle');
+  const overlay = document.getElementById('sidebarMobileOverlay');
+
+  // 1. Sidebar Collapse State
+  const savedCollapsed = localStorage.getItem('uppcl_sidebar_collapsed') === 'true';
+  if (sidebar && savedCollapsed) {
+    sidebar.classList.add('collapsed');
+    if (sidebarToggle) {
+      const icon = sidebarToggle.querySelector('.toggle-icon');
+      const txt = sidebarToggle.querySelector('.toggle-text');
+      if (icon) icon.textContent = '▶';
+      if (txt) txt.textContent = 'Expand';
+    }
+  }
+
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.toggle('collapsed');
+      localStorage.setItem('uppcl_sidebar_collapsed', isCollapsed);
+      const icon = sidebarToggle.querySelector('.toggle-icon');
+      const txt = sidebarToggle.querySelector('.toggle-text');
+      if (icon) icon.textContent = isCollapsed ? '▶' : '◀';
+      if (txt) txt.textContent = isCollapsed ? 'Expand' : 'Collapse';
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 260);
+    });
+  }
+
+  // Mobile drawer toggle
+  if (mobileToggle && sidebar) {
+    mobileToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('mobile-open');
+      if (overlay) overlay.classList.toggle('active', isOpen);
+    });
+  }
+  if (overlay && sidebar) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+    });
+  }
+
+  // 2. Tab Navigation
+  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  const tabContents = document.querySelectorAll('.dashboard-tab-content');
+
+  function activateTab(tabId, updateHash = true) {
+    let matchedItem = null;
+    navItems.forEach(item => {
+      const match = item.dataset.tab === tabId;
+      item.classList.toggle('active', match);
+      if (match) matchedItem = item;
+    });
+
+    tabContents.forEach(content => {
+      content.classList.toggle('active', content.id === tabId);
+    });
+
+    // Close mobile drawer on selection
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+
+    // Update Hash
+    if (updateHash) {
+      const hashMap = {
+        'tabDashboard': '#dashboard',
+        'tabCategory': '#category',
+        'tabCritical': '#critical',
+        'tabProgress': '#progress',
+        'tabDrilldown': '#drilldown'
+      };
+      if (hashMap[tabId]) {
+        history.replaceState(null, '', hashMap[tabId]);
+      }
+    }
+
+    // Handle Chart Resizing and Drilldown Lazy Loading
+    setTimeout(() => {
+      if (tabId === 'tabDashboard') {
+        if (chartMonthlyEnergy) { chartMonthlyEnergy.resize(); chartMonthlyEnergy.update('none'); }
+        if (chartMonthlyLoss) { chartMonthlyLoss.resize(); chartMonthlyLoss.update('none'); }
+      } else if (tabId === 'tabCategory') {
+        if (chartLineLoss) { chartLineLoss.resize(); chartLineLoss.update('none'); }
+        if (chartAtcLoss) { chartAtcLoss.resize(); chartAtcLoss.update('none'); }
+        if (computedResult) {
+          renderFeederTypeBreakdown(computedResult.feederTypeBreakdown);
+        }
+      } else if (tabId === 'tabDrilldown') {
+        initDrilldownIframe();
+      }
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+  }
+
+  window.switchDashboardTab = activateTab;
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const tabId = item.dataset.tab;
+      if (tabId) activateTab(tabId);
+    });
+  });
+
+  // Drilldown Iframe setup
+  function initDrilldownIframe(forceReload = false) {
+    const iframe = document.getElementById('drilldownIframe');
+    if (!iframe) return;
+    const currentSrc = iframe.getAttribute('src');
+    const dParam = state.discom ? `&discom=${encodeURIComponent(state.discom)}` : '';
+    const zParam = state.zone ? `&zone=${encodeURIComponent(state.zone)}` : '';
+    const targetUrl = `feeder_drilldown.html?v=${Date.now()}${dParam}${zParam}`;
+    if (!currentSrc || currentSrc === 'about:blank' || forceReload) {
+      iframe.src = targetUrl;
+    }
+  }
+
+  const btnReloadDrill = document.getElementById('btnReloadDrilldown');
+  if (btnReloadDrill) {
+    btnReloadDrill.addEventListener('click', () => initDrilldownIframe(true));
+  }
+
+  // 3. Initial Route from URL Hash
+  const hashToTab = {
+    '#dashboard': 'tabDashboard',
+    '#category': 'tabCategory',
+    '#critical': 'tabCritical',
+    '#progress': 'tabProgress',
+    '#drilldown': 'tabDrilldown'
+  };
+
+  const initialTab = hashToTab[window.location.hash] || 'tabDashboard';
+  activateTab(initialTab, false);
+
+  window.addEventListener('hashchange', () => {
+    const nextTab = hashToTab[window.location.hash];
+    if (nextTab) activateTab(nextTab, false);
+  });
+}
+
 // ── Initial Boot Sequence ──
 (async function boot() {
+  initSidebarTabs();
   checkHealth();
   initCharts();
   // initProgressiveSummaryChartControls(); // [Retained for future use]

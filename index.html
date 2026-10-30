@@ -25,14 +25,58 @@
   }
 })();
 </script>
-<link href="styles.css?v=20261014_154500" rel="stylesheet"/>
+<link href="styles.css?v=20261030_123000" rel="stylesheet"/>
 </head>
 <body>
+<div class="app-layout">
+<!-- ── SIDEBAR NAVIGATION ── -->
+<aside class="app-sidebar" id="appSidebar" aria-label="Dashboard Navigation">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">⚡</div>
+    <div class="sidebar-brand-text">
+      <div class="sidebar-title">UPPCL Feeder PSR</div>
+      <div class="sidebar-sub">Energy Accounting FY 26-27</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-tab="tabDashboard" id="nav-dashboard" title="Dashboard: Overview, Monthly Trends & League Table" type="button">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" data-tab="tabCategory" id="nav-category" title="Category-wise Summary: Loss Slabs & Tariff Categories" type="button">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Category-wise Summary</span>
+    </button>
+    <button class="nav-item" data-tab="tabCritical" id="nav-critical" title="Critical Feeder Analysis: Highest Loss & High Revenue Loss Feeders" type="button">
+      <span class="nav-icon">⚠️</span>
+      <span class="nav-label">Critical Feeder Analysis</span>
+    </button>
+    <button class="nav-item" data-tab="tabProgress" id="nav-progress" title="Progressive Summary: Discom & Zone Progressive Rollup" type="button">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Progress Summary</span>
+    </button>
+    <button class="nav-item" data-tab="tabDrilldown" id="nav-drilldown" title="Feeder Drilldown Explorer: Full 26,033 Feeder Accounting" type="button">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Feeder Drilldown</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="sidebar-toggle-btn" id="sidebarToggle" title="Collapse / Expand sidebar" type="button">
+      <span class="toggle-icon">◀</span>
+      <span class="toggle-text">Collapse</span>
+    </button>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebarMobileOverlay"></div>
+
+<div class="app-main" id="appMain">
 <div class="wrap">
 <!-- ── HEADER ── -->
 <header>
 <div>
-<h1>⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
+<h1><button class="btn btn-hamburger" id="sidebarMobileToggle" type="button" title="Toggle Navigation Sidebar">☰</button> ⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
 <p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto September 2026</p>
 </div>
 <div class="header-actions">
@@ -171,6 +215,9 @@
 </div>
 </section>
 <div class="chips" id="chipRow"></div>
+
+<!-- ── SECTION 1: DASHBOARD ── -->
+<div class="dashboard-tab-content active" id="tabDashboard" role="tabpanel" aria-labelledby="nav-dashboard">
 <!-- ── HEADLINE KPI CARDS ── -->
 <section aria-label="Headline KPIs">
 <!-- Row 1 -->
@@ -238,6 +285,7 @@
 <span id="refreshTs" style="margin-left:auto;color:var(--ink-3);font-family:var(--mono);"></span>
 </div>
 </section>
+
 <!-- ── MONTHLY TREND CHARTS (Input vs Billed & Loss Trend Apr-Aug) ── -->
 <div class="grid2">
 <section class="panel">
@@ -265,6 +313,7 @@
 </div>
 </section>
 </div>
+
 <!-- ── PERFORMANCE LEAGUE TABLE ── -->
 <section class="panel" id="panelLeagueTable">
 <div class="ph" style="flex-wrap: wrap; gap: 12px;">
@@ -312,6 +361,70 @@
 </table>
 </div>
 </section>
+</div>
+
+<!-- ── SECTION 2: CATEGORY-WISE SUMMARY ── -->
+<div class="dashboard-tab-content" id="tabCategory" role="tabpanel" aria-labelledby="nav-category">
+<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
+<div class="grid2">
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📊 Line Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartLineLoss"></canvas>
+</div>
+</section>
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📈 AT&amp;C Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartAtcLoss"></canvas>
+</div>
+</section>
+</div>
+
+<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
+<div class="grid2">
+<!-- Line Loss by Category Horizontal Bar -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ Line Loss by Category</h2>
+<p class="hint">Distribution of audited feeders across line loss categories</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
+<button aria-pressed="true" data-hbar="line" type="button">Line</button>
+</div>
+</div>
+<div class="bar-chart" id="hBarContainer"></div>
+</section>
+<!-- AT&C Loss by Feeder Type / Area (NEW) -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ AT&amp;C Loss by Category</h2>
+<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
+<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
+</div>
+</div>
+<div class="bar-chart" id="feederTypeBarContainer"></div>
+</section>
+</div>
+
 <!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE ── -->
 <section class="panel">
 <div class="ph">
@@ -346,64 +459,10 @@
 </table>
 </div>
 </section>
-<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
-<div class="grid2">
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📊 Line Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
 </div>
-<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartLineLoss"></canvas>
-</div>
-</section>
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📈 AT&amp;C Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
-</div>
-<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartAtcLoss"></canvas>
-</div>
-</section>
-</div>
-<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
-<div class="grid2">
-<!-- Line Loss by Category Horizontal Bar -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ Line Loss by Category</h2>
-<p class="hint">Distribution of audited feeders across line loss categories</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
-<button aria-pressed="true" data-hbar="line" type="button">Line</button>
-</div>
-</div>
-<div class="bar-chart" id="hBarContainer"></div>
-</section>
-<!-- AT&C Loss by Feeder Type / Area (NEW) -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ AT&amp;C Loss by Category</h2>
-<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
-<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
-</div>
-</div>
-<div class="bar-chart" id="feederTypeBarContainer"></div>
-</section>
-</div>
+
+<!-- ── SECTION 3: CRITICAL FEEDER ANALYSIS ── -->
+<div class="dashboard-tab-content" id="tabCritical" role="tabpanel" aria-labelledby="nav-critical">
 <!-- ── WORST 10 FEEDERS PANEL (>70% Slab) ── -->
 <section class="panel">
 <div class="ph">
@@ -432,6 +491,7 @@
 </table>
 </div>
 </section>
+
 <!-- ── TOP 150 FEEDERS WITH LARGEST REVENUE LOSS VALUE ── -->
 <section class="panel">
 <div class="ph">
@@ -465,6 +525,10 @@
 </table>
 </div>
 </section>
+</div>
+
+<!-- ── SECTION 4: PROGRESS SUMMARY ── -->
+<div class="dashboard-tab-content" id="tabProgress" role="tabpanel" aria-labelledby="nav-progress">
 <!-- ── PROGRESSIVE SUMMARY TABLE (DISCOM & ZONE ROLLUP) ── -->
 <section class="panel">
 <div class="ph">
@@ -515,40 +579,32 @@
 </table>
 </div>
 </section>
-<!-- ── PROGRESSIVE SUMMARY CHART (DISCOM & ZONE SLAB MIX) [COMMENTED OUT FOR FUTURE USE] ──
-<section class="panel">
-<div class="ph">
+</div>
+
+<!-- ── SECTION 5: FEEDER DRILLDOWN EXPLORER ── -->
+<div class="dashboard-tab-content" id="tabDrilldown" role="tabpanel" aria-labelledby="nav-drilldown">
+<section class="panel" style="padding: 14px 18px;">
+<div class="ph" style="margin-bottom: 12px;">
 <div>
-<h2>📊 Progressive Summary — Slab Mix by Discom &amp; Zone</h2>
-<p class="hint" id="psChartHint">Share of feeders in each loss slab · Click a Discom bar to see its zones</p>
+<h2 style="display:flex; align-items:center; gap:8px;">
+<span>🔍 Feeder Drilldown Explorer</span>
+<span class="pill p-good" style="font-size:11px;">26,033 Total Feeders</span>
+</h2>
+<p class="hint">Comprehensive row-level individual feeder audit explorer across all 24 columns, meters, losses, and realization</p>
 </div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-<div class="seg" role="group" aria-label="Loss metric">
-<button aria-pressed="true" class="active" data-ps-loss="atc" type="button">AT&amp;C</button>
-<button aria-pressed="false" data-ps-loss="line" type="button">Line</button>
-</div>
-<div class="seg" role="group" aria-label="Grouping level">
-<button aria-pressed="true" class="active" data-ps-view="discom" type="button">Discoms</button>
-<button aria-pressed="false" data-ps-view="zone" type="button">Zones</button>
-</div>
-<div class="seg" role="group" aria-label="Display mode">
-<button aria-pressed="true" class="active" data-ps-mode="pct" type="button">% Share</button>
-<button aria-pressed="false" data-ps-mode="count" type="button">Count</button>
-</div>
-<button class="btn" id="psChartBack" style="display:none;padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:600;" type="button">← All Discoms</button>
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+<button class="btn" id="btnReloadDrilldown" type="button" title="Refresh Explorer view">🔄 Reload</button>
+<a class="btn btn-primary" id="btnOpenDrilldownTab" href="feeder_drilldown.html" target="_blank" title="Open full explorer in separate tab">↗ Open in New Window</a>
 </div>
 </div>
-<div id="psChartWrap" style="position:relative;height:320px;width:100%;">
-<canvas id="chartProgressiveSummary"></canvas>
+<div class="drilldown-container" style="border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface);">
+<iframe id="drilldownIframe" data-src="feeder_drilldown.html" style="width: 100%; height: 750px; border: none; display: block;" title="Feeder Drilldown Explorer"></iframe>
 </div>
 </section>
--->
-
-
 </div>
-
-
-
+</div>
+</div>
+</div>
 
 <div class="modal-overlay" id="filterGuideModal">
 <div class="modal-content">
@@ -665,5 +721,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_121500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_121500"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_121500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_123000"></script></body>
 </html>
