@@ -50,5 +50,5 @@ const parsed = JSON.parse(decrypted.toString('utf8'));
 
 console.log('Verification successful!');
 console.log('Decrypted row count:', parsed.rows ? parsed.rows.length : 0);
-console.assert(parsed.rows.length === 26310, 'Expected 26237 rows');
+console.assert(parsed.rows.length === 26237, 'Expected 26237 rows');
 console.log('Feeder dataset encryption COMPLETE.');
