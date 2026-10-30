@@ -25,14 +25,58 @@
   }
 })();
 </script>
-<link href="styles.css?v=20261014_154500" rel="stylesheet"/>
+<link href="styles.css?v=20261030_123500" rel="stylesheet"/>
 </head>
 <body>
+<div class="app-layout">
+<!-- ── SIDEBAR NAVIGATION ── -->
+<aside class="app-sidebar" id="appSidebar" aria-label="Dashboard Navigation">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">⚡</div>
+    <div class="sidebar-brand-text">
+      <div class="sidebar-title">UPPCL Feeder PSR</div>
+      <div class="sidebar-sub">Energy Accounting FY 26-27</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-tab="tabDashboard" id="nav-dashboard" title="Dashboard: Overview, Monthly Trends & League Table" type="button">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" data-tab="tabCategory" id="nav-category" title="Category-wise Summary: Loss Slabs & Tariff Categories" type="button">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Category-wise Summary</span>
+    </button>
+    <button class="nav-item" data-tab="tabCritical" id="nav-critical" title="Critical Feeder Analysis: Highest Loss & High Revenue Loss Feeders" type="button">
+      <span class="nav-icon">⚠️</span>
+      <span class="nav-label">Critical Feeder Analysis</span>
+    </button>
+    <button class="nav-item" data-tab="tabProgress" id="nav-progress" title="Progressive Summary: Discom & Zone Progressive Rollup" type="button">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Progress Summary</span>
+    </button>
+    <button class="nav-item" data-tab="tabDrilldown" id="nav-drilldown" title="Feeder Drilldown Explorer: Full 26,033 Feeder Accounting" type="button">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Feeder Drilldown</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="sidebar-toggle-btn" id="sidebarToggle" title="Collapse / Expand sidebar" type="button">
+      <span class="toggle-icon">◀</span>
+      <span class="toggle-text">Collapse</span>
+    </button>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebarMobileOverlay"></div>
+
+<div class="app-main" id="appMain">
 <div class="wrap">
 <!-- ── HEADER ── -->
 <header>
 <div>
-<h1>⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
+<h1><button class="btn btn-hamburger" id="sidebarMobileToggle" type="button" title="Toggle Navigation Sidebar">☰</button> ⚡ UPPCL 11KV Feeder PSR Dashboard</h1>
 <p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto September 2026</p>
 </div>
 <div class="header-actions">
@@ -43,7 +87,7 @@
 <button class="btn btn-primary" id="btnSummaryCsv" title="Export Executive Summary to CSV" type="button">
         ⬇ Export CSV
       </button>
-<button class="btn btn-theme" id="themeToggle" title="Toggle dark/light mode" type="button">🌙</button>
+<button class="btn btn-theme" id="themeToggle" title="Toggle theme (Light / Dark / Midnight)" type="button">🌙</button>
 <button class="btn" id="btnSignOut" type="button" title="Sign out of dashboard" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">🔒 Sign Out</button>
 </div>
 </header>
@@ -171,6 +215,9 @@
 </div>
 </section>
 <div class="chips" id="chipRow"></div>
+
+<!-- ── SECTION 1: DASHBOARD ── -->
+<div class="dashboard-tab-content active" id="tabDashboard" role="tabpanel" aria-labelledby="nav-dashboard">
 <!-- ── HEADLINE KPI CARDS ── -->
 <section aria-label="Headline KPIs">
 <!-- Row 1 -->
@@ -238,6 +285,7 @@
 <span id="refreshTs" style="margin-left:auto;color:var(--ink-3);font-family:var(--mono);"></span>
 </div>
 </section>
+
 <!-- ── MONTHLY TREND CHARTS (Input vs Billed & Loss Trend Apr-Aug) ── -->
 <div class="grid2">
 <section class="panel">
@@ -265,6 +313,7 @@
 </div>
 </section>
 </div>
+
 <!-- ── PERFORMANCE LEAGUE TABLE ── -->
 <section class="panel" id="panelLeagueTable">
 <div class="ph" style="flex-wrap: wrap; gap: 12px;">
@@ -312,6 +361,10 @@
 </table>
 </div>
 </section>
+</div>
+
+<!-- ── SECTION 2: CATEGORY-WISE SUMMARY ── -->
+<div class="dashboard-tab-content" id="tabCategory" role="tabpanel" aria-labelledby="nav-category">
 <!-- ── CATEGORY-WISE PERFORMANCE SUMMARY TABLE ── -->
 <section class="panel">
 <div class="ph">
@@ -346,64 +399,10 @@
 </table>
 </div>
 </section>
-<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
-<div class="grid2">
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📊 Line Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
 </div>
-<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartLineLoss"></canvas>
-</div>
-</section>
-<section class="panel">
-<div class="ph">
-<div>
-<h2>📈 AT&amp;C Loss Slabs</h2>
-<p class="hint">Click any bar to drill down into individual feeders</p>
-</div>
-<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
-</div>
-<div class="chart-box">
-<canvas id="chartAtcLoss"></canvas>
-</div>
-</section>
-</div>
-<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
-<div class="grid2">
-<!-- Line Loss by Category Horizontal Bar -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ Line Loss by Category</h2>
-<p class="hint">Distribution of audited feeders across line loss categories</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
-<button aria-pressed="true" data-hbar="line" type="button">Line</button>
-</div>
-</div>
-<div class="bar-chart" id="hBarContainer"></div>
-</section>
-<!-- AT&C Loss by Feeder Type / Area (NEW) -->
-<section class="panel">
-<div class="ph">
-<div>
-<h2>⚡ AT&amp;C Loss by Category</h2>
-<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
-</div>
-<div class="seg" role="group">
-<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
-<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
-</div>
-</div>
-<div class="bar-chart" id="feederTypeBarContainer"></div>
-</section>
-</div>
+
+<!-- ── SECTION 3: CRITICAL FEEDER ANALYSIS ── -->
+<div class="dashboard-tab-content" id="tabCritical" role="tabpanel" aria-labelledby="nav-critical">
 <!-- ── WORST 10 FEEDERS PANEL (>70% Slab) ── -->
 <section class="panel">
 <div class="ph">
@@ -432,6 +431,7 @@
 </table>
 </div>
 </section>
+
 <!-- ── TOP 150 FEEDERS WITH LARGEST REVENUE LOSS VALUE ── -->
 <section class="panel">
 <div class="ph">
@@ -465,15 +465,80 @@
 </table>
 </div>
 </section>
+</div>
+
+<!-- ── SECTION 4: PROGRESS SUMMARY ── -->
+<div class="dashboard-tab-content" id="tabProgress" role="tabpanel" aria-labelledby="nav-progress">
+<!-- ── INTERACTIVE SLAB CHARTS (CLICKABLE) ── -->
+<div class="grid2">
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📊 Line Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-good" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartLineLoss"></canvas>
+</div>
+</section>
+<section class="panel">
+<div class="ph">
+<div>
+<h2>📈 AT&amp;C Loss Slabs</h2>
+<p class="hint">Click any bar to drill down into individual feeders</p>
+</div>
+<span class="pill p-warn" style="font-size:11px;">👆 Click bar to drilldown</span>
+</div>
+<div class="chart-box">
+<canvas id="chartAtcLoss"></canvas>
+</div>
+</section>
+</div>
+
+<!-- ── HORIZONTAL BREAKDOWNS: SLAB & FEEDER TYPE ── -->
+<div class="grid2">
+<!-- Line Loss by Category Horizontal Bar -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ Line Loss by Category</h2>
+<p class="hint">Distribution of audited feeders across line loss categories</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="false" data-hbar="atc" type="button">AT&amp;C</button>
+<button aria-pressed="true" data-hbar="line" type="button">Line</button>
+</div>
+</div>
+<div class="bar-chart" id="hBarContainer"></div>
+</section>
+<!-- AT&C Loss by Feeder Type / Area (NEW) -->
+<section class="panel">
+<div class="ph">
+<div>
+<h2>⚡ AT&amp;C Loss by Category</h2>
+<p class="hint">Toggle between Feeder Type (nature) and Project Area</p>
+</div>
+<div class="seg" role="group">
+<button aria-pressed="true" data-ft-toggle="feederType" type="button">Feeder Type</button>
+<button aria-pressed="false" data-ft-toggle="area" type="button">Area</button>
+</div>
+</div>
+<div class="bar-chart" id="feederTypeBarContainer"></div>
+</section>
+</div>
+
 <!-- ── PROGRESSIVE SUMMARY TABLE (DISCOM & ZONE ROLLUP) ── -->
 <section class="panel">
 <div class="ph">
 <div>
 <h2>📋 Progressive Summary — Discoms &amp; Zones</h2>
-<p class="hint">Click column headers to sort · Click ▶ on Discom row to expand/collapse zones</p>
+<p class="hint">Click column headers to sort · Click ▶ on Discom row to unfold/fold zones</p>
 </div>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
 <input id="tSearch" placeholder="Filter table rows..." style="max-width:160px;" type="search"/>
+<button class="btn" id="btnToggleAllDiscoms" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Unfold or Fold all Discom rows" type="button"><span id="lblToggleAllDiscoms">▶ Unfold All</span></button>
 <button class="btn" id="btnExportSummaryXlsx" style="padding:5px 12px;font-size:12px;background:#1d7a3e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="Download native Excel workbook with expandable/collapsible Discom rows" type="button">📊 Export Excel (.xlsx)</button>
 <button class="btn" id="btnExportSummaryTable" style="padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;" title="Download plain CSV text file" type="button">⬇ Export CSV</button>
 </div>
@@ -515,125 +580,32 @@
 </table>
 </div>
 </section>
-<!-- ── PROGRESSIVE SUMMARY CHART (DISCOM & ZONE SLAB MIX) [COMMENTED OUT FOR FUTURE USE] ──
-<section class="panel">
-<div class="ph">
+</div>
+
+<!-- ── SECTION 5: FEEDER DRILLDOWN EXPLORER ── -->
+<div class="dashboard-tab-content" id="tabDrilldown" role="tabpanel" aria-labelledby="nav-drilldown">
+<section class="panel" style="padding: 14px 18px;">
+<div class="ph" style="margin-bottom: 12px;">
 <div>
-<h2>📊 Progressive Summary — Slab Mix by Discom &amp; Zone</h2>
-<p class="hint" id="psChartHint">Share of feeders in each loss slab · Click a Discom bar to see its zones</p>
+<h2 style="display:flex; align-items:center; gap:8px;">
+<span>🔍 Feeder Drilldown Explorer</span>
+<span class="pill p-good" style="font-size:11px;">26,033 Total Feeders</span>
+</h2>
+<p class="hint">Comprehensive row-level individual feeder audit explorer across all 24 columns, meters, losses, and realization</p>
 </div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-<div class="seg" role="group" aria-label="Loss metric">
-<button aria-pressed="true" class="active" data-ps-loss="atc" type="button">AT&amp;C</button>
-<button aria-pressed="false" data-ps-loss="line" type="button">Line</button>
-</div>
-<div class="seg" role="group" aria-label="Grouping level">
-<button aria-pressed="true" class="active" data-ps-view="discom" type="button">Discoms</button>
-<button aria-pressed="false" data-ps-view="zone" type="button">Zones</button>
-</div>
-<div class="seg" role="group" aria-label="Display mode">
-<button aria-pressed="true" class="active" data-ps-mode="pct" type="button">% Share</button>
-<button aria-pressed="false" data-ps-mode="count" type="button">Count</button>
-</div>
-<button class="btn" id="psChartBack" style="display:none;padding:5px 10px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line-2);border-radius:6px;cursor:pointer;font-weight:600;" type="button">← All Discoms</button>
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+<button class="btn" id="btnReloadDrilldown" type="button" title="Refresh Explorer view">🔄 Reload</button>
+<a class="btn btn-primary" id="btnOpenDrilldownTab" href="feeder_drilldown.html" target="_blank" title="Open full explorer in separate tab">↗ Open in New Window</a>
 </div>
 </div>
-<div id="psChartWrap" style="position:relative;height:320px;width:100%;">
-<canvas id="chartProgressiveSummary"></canvas>
-</div>
-</section>
--->
-
-<!-- ── CALCULATION NOTES & DATA QUALITY ── -->
-<section class="panel">
-<button class="notes-toggle" id="notesToggle" type="button">
-<span>📝 Calculation Methodology &amp; Data Quality Notes</span>
-<span id="notesArrow">▼</span>
-</button>
-<div class="notes-body open" id="notesBody">
-<p><b>1. Multiplicative AT&amp;C Formula:</b> AT&amp;C Loss is mathematically calculated as <code>100% − (Billing Efficiency × Collection Efficiency)</code>.</p>
-<p><b>2. Thru Rate vs ABR:</b> <b>ABR</b> (Average Billing Rate) = <code>Assessment ÷ Sold Energy</code>. <b>Thru Rate</b> = <code>Realised Amount ÷ Input Energy</code>, indicating actual cash realized per unit wheeled.</p>
-<p><b>3. Leave-out Filters:</b> Exclude Abnormal Assessment excludes feeders with assessment &gt; ₹1 Crore and ABR &gt; ₹50/unit. Exclude Billed &gt; Input removes feeders with negative line loss.</p>
-<p><b>4. Units:</b> Energy in MU (Million Units = 1,000 MWh). Financial amounts in ₹ Crore (100 Lakhs = 1 Crore). Rates in ₹/kWh.</p>
-</div>
-</section>
-
-<!-- ── FILTER GUIDE — DEFINITIONS AND IMPACT ── -->
-<section class="panel" id="filterGuideSection" style="margin-top: 16px;">
-<div class="ph">
-<div>
-<h2>📘 Filter Guide — Definitions and Impact</h2>
-<p class="hint">Comprehensive operational guide to the 7 interactive filter checkboxes and their exact impact on feeder populations and calculations</p>
-</div>
-</div>
-<div style="padding: 16px 20px 24px; display: grid; gap: 16px; font-size: 13px; color: var(--ink-2); line-height: 1.6;">
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>A. Exclude Abnormal Assessment</span>
-<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Evaluates feeder billing data where Average Billing Rate (ABR) exceeds <code>₹50/kWh</code> OR where progressive Assessment exceeds <code>₹100 Lakhs (₹1 Crore)</code> with zero sold energy.</p>
-<p><strong>Selecting the Checkbox:</strong> Excludes these statistical outlier feeders entirely from the active calculation population (affecting Input Energy, Sold Energy, Assessment, Realization, and Feeder Counts across all cards and tables).</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Keeps all feeders included transparently in calculations regardless of abnormal assessment anomalies.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>B. Exclude Billed &gt; Input</span>
-<span class="tag-badge" style="font-size: 10px;">Feeder Exclusion Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Identifies feeders where progressive Billed Energy (Sold Energy) exceeds Input Energy, producing a negative line loss condition (Flag bit 2).</p>
-<p><strong>Selecting the Checkbox:</strong> Excludes feeders with Billed &gt; Input from the active dashboard calculations and summaries.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Retains these feeders in the dataset, ensuring the entire network is accounted for without hiding negative loss anomalies.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>C. Include PTW Connections</span>
-<span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount (₹38,126.98 Cr), total feeders (26,033), Input Energy (79,974.61 MU), Sold Energy (50,155.59 MU), and Line Loss remain strictly <strong>INVARIANT</strong>.</p>
-<p><strong>Selecting the Checkbox:</strong> Credits PTW assessment amount directly into revenue realization, increasing Collection Efficiency and reducing computed AT&amp;C Loss.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Evaluates realization strictly on direct cash collected without agricultural subsidy credit.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>D. Include Govt Connections</span>
-<span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Governs government consumer categories (Public Water Works LMV-3, Institutions/Govt Offices LMV-4A, and Street Lights LMV-7) where assessment has deemed revenue backing.</p>
-<p><strong>Selecting the Checkbox (Default):</strong> Treats government connections under deemed revenue credit (Assessment = Realization), recognizing statutory book transfers.</p>
-<p><strong>Deselecting the Checkbox:</strong> Removes the deemed credit adjustment and reduces revenue realization by 4.5% of assessment across feeders, reflecting strictly physical cash collected (~40% Collection Efficiency for government accounts).</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>E. Exclude CDF Bills</span>
-<span class="tag-badge" style="font-size: 10px;">Energy &amp; Assessment Adjustment Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Adjusts for Defective / Change-of-Defective (CDF) consumer bills and extreme consumption/assessment outliers (&gt;1,500 units/kW or &gt;₹10,000/kW).</p>
-<p><strong>Selecting the Checkbox:</strong> Excludes CDF provisional energy and billing anomalies from Sold Energy (reduced by 2.1% to factor out provisional unread units) and Assessment (reduced by 1.5% to eliminate provisional demand spikes). <strong>Amount Realised remains completely UNCHANGED</strong> across all KPI cards, summary tables, drilldowns, and reports, reflecting exact actual revenue collections.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Retains unadjusted billed consumption and provisional assessment as originally recorded.</p>
-</div>
-
-<div style="border-left: 3px solid var(--accent); padding-left: 14px;">
-<h4 style="color: var(--ink); font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-<span>F. Include Subsidy</span>
-<span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Filter</span>
-</h4>
-<p><strong>Implemented Rule:</strong> Incorporates State Government Subsidies (Tariff Subsidy, Powerloom Subsidy, and PTW Subsidy, excluding Cross Subsidy) into total energy revenue billing and realization under 100% statutory government deemed backing.</p>
-<p><strong>Selecting the Checkbox:</strong> Incorporates state subsidy entitlements (feeder PTW subsidy + 23.8% of assessed revenue) into <strong>both Amount Assessed and Amount Realised</strong>, reflecting statutory state government subsidy commitments and deemed recovery, boosting Collection Efficiency and reducing computed AT&amp;C Loss.</p>
-<p><strong>Deselecting the Checkbox (Default):</strong> Calculates assessment and realization based purely on consumer tariff billing/collections and selected deemed credits without state subsidy grants.</p>
-</div>
-
+<div class="drilldown-container" style="border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface);">
+<iframe id="drilldownIframe" data-src="feeder_drilldown.html" style="width: 100%; height: 750px; border: none; display: block;" title="Feeder Drilldown Explorer"></iframe>
 </div>
 </section>
 </div>
-
-
-
+</div>
+</div>
+</div>
 
 <div class="modal-overlay" id="filterGuideModal">
 <div class="modal-content">
