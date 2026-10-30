@@ -134,11 +134,11 @@ for r in feeders_26237:
     a_idx = a_map[area]
     n_idx = n_map[nature]
     
-    # Monthly IE (Cols 28-33: Apr-Sep)
-    ie = [clean_num1(sr[c]) for c in range(28, 34)]
+    # Monthly IE (Cols 28-33: Apr-Sep) - 2 decimal places to preserve fractional metering (e.g. 0.01, 0.02 MU)
+    ie = [clean_num(sr[c]) for c in range(28, 34)]
     
     # Monthly SE (Cols 52-57: Apr-Sep)
-    se = [clean_num1(sr[c]) for c in range(52, 58)]
+    se = [clean_num(sr[c]) for c in range(52, 58)]
     
     # Monthly Ass (Cols 64-69: Apr-Sep)
     ass = [clean_num(sr[c]) for c in range(64, 70)]
