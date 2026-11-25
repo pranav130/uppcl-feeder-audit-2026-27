@@ -1438,12 +1438,12 @@ window.filterByDiscomName = function(dName) {
 };
 
 const BASE_DISCOM_FEEDERS = {
-  'ALL': 26033,
-  'PVVNL': 8074,
-  'DVVNL': 6094,
-  'PUVNL': 5579,
-  'MVVNL': 5662,
-  'KESCO': 624
+  'ALL': 26655,
+  'PVVNL': 8266,
+  'DVVNL': 6231,
+  'PUVNL': 5639,
+  'MVVNL': 5892,
+  'KESCO': 627
 };
 
 // Discom-wise monthly billable consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
@@ -1494,8 +1494,8 @@ function getActiveCategoryData() {
   const activeAss = kpis ? (kpis.assessmentCr || 0) : baseAss;
   const activeMu = kpis ? (kpis.soldEnergyMu || 0) : baseMu;
   const activeReal = kpis ? (kpis.realizationCr || 0) : baseReal;
-  const activeFeeders = kpis ? (kpis.totalFeeders || 0) : (BASE_DISCOM_FEEDERS[discKey] || 26033);
-  const baseFeeders = BASE_DISCOM_FEEDERS[discKey] || 26033;
+  const activeFeeders = kpis ? (kpis.totalFeeders || 0) : (BASE_DISCOM_FEEDERS[discKey] || 26655);
+  const baseFeeders = BASE_DISCOM_FEEDERS[discKey] || 26655;
 
   if (kpis && (activeFeeders === 0 || (activeAss === 0 && activeMu === 0))) {
     return { discKey, rows: [] };
