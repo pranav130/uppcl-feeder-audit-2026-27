@@ -77,7 +77,7 @@ window.onFilterOptionChanged = function(el) {
 
 /* ═══════════════════════════════════════════════════════════════
    UPPCL 11KV Feeder PSR Dashboard · Unified Reactive Engine
-   - 26,033 feeders in-memory calculation (12ms instantaneous)
+   - 26,655 feeders in-memory calculation (12ms instantaneous)
    - Exact multi-tier cascade (Zone, Circle, Division, Area, Nature)
    - Complete isolation (AGRA strictly matches AGRA, never Prayagraj)
    - Works flawlessly both on Live DB (localhost) and GitHub Pages
@@ -1943,7 +1943,7 @@ function renderProgressiveSummaryTable(groups) {
 
   const hintEl = document.getElementById('summaryTableHint');
   if (hintEl) {
-    const totalCount = grandTotal.total_feeders > 0 ? fmt(grandTotal.total_feeders) : '26,237';
+    const totalCount = grandTotal.total_feeders > 0 ? fmt(grandTotal.total_feeders) : '26,655';
     hintEl.innerHTML = `Feeder count distribution across loss slabs for <b>${periodTag}</b> (${totalCount} total feeders) · Click column headers to sort · Click ▶ on Discom row to unfold/fold zones`;
   }
 

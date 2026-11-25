@@ -70,7 +70,7 @@ console.log('calculateMetrics evaluated successfully!');
 
 const res = calculateMetrics();
 console.log('Used feeders count:', res.usedFeeders.length);
-console.assert(res.usedFeeders.length === 26237, `Expected 26237 feeders, got ${res.usedFeeders.length}`);
+console.assert(res.usedFeeders.length === 26655, `Expected 26655 feeders, got ${res.usedFeeders.length}`);
 
 // Test aggregation for all 5 levels (Progressive Apr-Oct 2026)
 ['discom', 'zone', 'circle', 'division', 'substation'].forEach(level => {
@@ -105,7 +105,7 @@ console.assert(res.usedFeeders.length === 26237, `Expected 26237 feeders, got ${
   }
 
   console.log(`Level: ${level.padEnd(10)} | Groups: ${String(groups.size).padStart(5)} | Feeders: ${totFeeders} | Input MU: ${(totIE/1000).toFixed(2)} | Fdrs>70%: ${tot70}`);
-  console.assert(totFeeders === 26237, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
+  console.assert(totFeeders === 26655, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
 });
 
 // Test Single Month (Oct-Oct) and Verify PSR Slabs
@@ -122,7 +122,7 @@ for (const sg of octRes.progressiveSummary) {
   octFeeders += sg.total_feeders;
 }
 console.log(`Oct-26 Single Month PSR Verify: Input MU=${octRes.kpis.inputEnergyMu.toFixed(2)}, Total Feeders=${octFeeders}`);
-console.assert(octFeeders === 26237, 'Expected 26237 in Oct-26 PSR');
+console.assert(octFeeders === 26655, 'Expected 26655 in Oct-26 PSR');
 
 // Test Clean Abnormal Filter on Oct-26
 state.excludeAbnormal = true;

@@ -56,7 +56,7 @@ def norm_oracle_disc(s):
     return u
 
 print("=" * 75)
-print("UPPCL 11KV FEEDER AUDIT — EXTENDING TO OCTOBER 2026 (7 MONTHS PROGRESSIVE)")
+print("UPPCL 11KV FEEDER AUDIT — EXTENDING TO OCTOBER 2026 (FULL ACTIVE UNIVERSE)")
 print("=" * 75)
 
 # 1. Verify Division Master CSV
@@ -75,6 +75,39 @@ N = baseline['d']
 R = baseline['rows']
 assert len(R) == 26237, f"Expected 26237 rows, got {len(R)}"
 print(f"2. Loaded 26,237 baseline feeders (Apr-Sep 2026).")
+
+# Build reverse lookup maps for dimensions
+def build_idx_map(lst):
+    return {s.strip().upper(): i for i, s in enumerate(lst)}
+
+d_map    = build_idx_map(N['Discom'])
+z_map    = build_idx_map(N['Zone'])
+c_map    = build_idx_map(N['Circle'])
+div_map  = build_idx_map(N['Division'])
+a_map    = build_idx_map(N['Area'])
+n_map    = build_idx_map(N['Nature'])
+ss_map   = build_idx_map(N['SS'])
+
+def get_or_add(val, lst, mp):
+    s = str(val or '').strip().upper() or 'UNKNOWN'
+    if s not in mp:
+        mp[s] = len(lst)
+        lst.append(s)
+    return mp[s]
+
+def normalize_area(a):
+    u = str(a or '').strip().upper()
+    if 'TEHSIL' in u: return 'TEHSIL'
+    if 'RURAL' in u: return 'RURAL'
+    return 'URBAN'
+
+def normalize_nature(n):
+    u = str(n or '').strip().upper()
+    for valid in N['Nature']:
+        if valid == u: return valid
+    for valid in N['Nature']:
+        if valid in u: return valid
+    return 'OTHER'
 
 # 3. Parse Input Energy HTML Report (OCT-26)
 class EnergyHTMLParser(HTMLParser):
@@ -109,12 +142,12 @@ with open(ENERGY_HTML, 'r', encoding='latin-1', errors='replace') as f:
     for chunk in iter(lambda: f.read(65536), ''):
         parser.feed(chunk)
 
+oct_outgoing_rows = []
 e_dsf, e_df, e_sf, e_f, e_fc = {}, {}, {}, {}, {}
 for row in parser.rows:
     outgoing = row[9].strip()
     if not outgoing:
         continue
-    # Only process October rows if Month col exists
     mon = row[6].strip().lower()
     if mon and 'october' not in mon:
         continue
@@ -123,13 +156,14 @@ for row in parser.rows:
     ec = clean_num(row[18], 2)
     val = total_ie if total_ie > 0 else ec
     
+    oct_outgoing_rows.append((row, val))
     e_dsf[div+ss+fdr] = e_dsf.get(div+ss+fdr, 0.0) + val
     e_df[div+fdr] = e_df.get(div+fdr, 0.0) + val
     e_sf[ss+fdr] = e_sf.get(ss+fdr, 0.0) + val
     e_f[fdr] = e_f.get(fdr, 0.0) + val
     if fc:
         e_fc[fc] = e_fc.get(fc, 0.0) + val
-print(f"   Indexed {len(e_f)} unique outgoing feeders from Energy HTML report.")
+print(f"   Indexed {len(oct_outgoing_rows)} outgoing feeder rows from Energy HTML report.")
 
 # 4. Parse Oracle OCT26 XLSX
 print("4. Parsing Oracle OCT26 XLSX (116,822 rows)...")
@@ -198,12 +232,15 @@ for p in ptw_list:
     if fc:
         ptw_dcode[disc+fc] = ptw_dcode.get(disc+fc, 0.0) + val
 
-# 6. Merge and Extend to 7 Months (Apr-Oct 2026)
-print("6. Extending all 26,237 feeders to Month 6 (Oct-2026)...")
+# 6A. Extend all 26,237 baseline feeders to Month 6 (Oct-2026)
+print("6. Extending 26,237 baseline feeders + adding new/energized Oct-26 feeders...")
 matched_ie = 0
 matched_ora = 0
 matched_ptw = 0
 new_rows = []
+
+seen_baseline_keys = set()
+seen_baseline_fcodes = set()
 
 for r in R:
     disc_full = N['Discom'][r[0]]
@@ -213,6 +250,10 @@ for r in R:
     fdr_raw = r[5]
     fdr = norm(fdr_raw)
     fc = fcode(fdr_raw)
+    
+    seen_baseline_keys.add(norm(disc_full) + fdr)
+    if fc:
+        seen_baseline_fcodes.add(fc)
     
     # Match IE
     ie_oct = None
@@ -228,7 +269,7 @@ for r in R:
     else:
         ie_oct = 0.0
         
-    # Match Oracle (strictly prefers Discom+Division+SS+Feeder, then Discom+Division+Feeder, etc.)
+    # Match Oracle
     ora_m = (
         ora_ddsf.get(disc+div+ss+fdr)
         or ora_ddf.get(disc+div+fdr)
@@ -245,11 +286,7 @@ for r in R:
         real_oct = round(ora_m['real_rs'] / 1e5, 2)
         ptw_sub_oct = round(ora_m['ptw_sub_rs'] / 1e5, 2)
     else:
-        cons_oct = 0
-        se_oct = 0.0
-        ass_oct = 0.0
-        real_oct = 0.0
-        ptw_sub_oct = 0.0
+        cons_oct = 0; se_oct = 0.0; ass_oct = 0.0; real_oct = 0.0; ptw_sub_oct = 0.0
         
     # Match PTW_Ass
     ptw_ass_raw = (
@@ -264,7 +301,6 @@ for r in R:
         matched_ptw += 1
     ptw_ass_oct = round(min(ptw_ass_raw, ass_oct), 2) if ass_oct > 0 else 0.0
     
-    # Extend 6-month arrays cleanly to 7 months
     ie_arr      = [round(float(x), 2) for x in r[8][:6]] + [ie_oct]
     se_arr      = [round(float(x), 2) for x in r[9][:6]] + [se_oct]
     ass_arr     = [round(float(x), 2) for x in r[10][:6]] + [ass_oct]
@@ -272,19 +308,13 @@ for r in R:
     ptw_ass_arr = [round(float(x), 2) for x in r[14][:6]] + [ptw_ass_oct]
     ptw_sub_arr = [round(float(x), 2) for x in r[15][:6]] + [ptw_sub_oct]
     
-    # Current Month Consumers = Oct 2026 Billable Consumers
     cons_cur = cons_oct
-    
-    # 7-month flags
-    tot_ie = sum(ie_arr)
-    tot_se = sum(se_arr)
+    tot_ie = sum(ie_arr); tot_se = sum(se_arr)
     flags = 0
     if tot_ie > 0:
         ll_pct = ((tot_ie - tot_se) / tot_ie) * 100.0
-        if ll_pct < 0 or ll_pct > 100:
-            flags |= 1
-        if tot_se > tot_ie:
-            flags |= 2
+        if ll_pct < 0 or ll_pct > 100: flags |= 1
+        if tot_se > tot_ie: flags |= 2
     else:
         flags |= 4
     if cons_cur == 0:
@@ -296,7 +326,90 @@ for r in R:
         cons_cur, flags, ptw_ass_arr, ptw_sub_arr
     ])
 
-assert len(new_rows) == 26237
+# 6B. Append the 418 new/energized October feeders from DistributionMasterMeterDataReportExcel
+added_extra = 0
+extra_matched_ora = 0
+for row, ie_val in oct_outgoing_rows:
+    disc_full = row[1].strip().upper()
+    out_raw = row[9].strip()
+    fdr = norm(out_raw)
+    fc = fcode(out_raw)
+    if (norm(disc_full) + fdr) in seen_baseline_keys or (fc and fc in seen_baseline_fcodes):
+        continue
+        
+    added_extra += 1
+    disc = DISCOM_TO_SHORT.get(disc_full, disc_full)
+    zone_raw = row[2].strip().upper()
+    circle_raw = row[3].strip().upper()
+    div_raw = row[4].strip().upper()
+    ss_raw = row[5].strip().upper()
+    area_raw = normalize_area(row[10] if len(row) > 10 else '')
+    nature_raw = normalize_nature(row[16] if len(row) > 16 else '')
+    
+    d_idx   = get_or_add(disc_full, N['Discom'], d_map)
+    z_idx   = get_or_add(zone_raw, N['Zone'], z_map)
+    c_idx   = get_or_add(circle_raw, N['Circle'], c_map)
+    div_idx = get_or_add(div_raw, N['Division'], div_map)
+    ss_idx  = get_or_add(ss_raw, N['SS'], ss_map)
+    a_idx   = get_or_add(area_raw, N['Area'], a_map)
+    n_idx   = get_or_add(nature_raw, N['Nature'], n_map)
+    
+    div = norm(div_raw); ss = norm(ss_raw)
+    ora_m = (
+        ora_ddsf.get(disc+div+ss+fdr)
+        or ora_ddf.get(disc+div+fdr)
+        or ora_dsf.get(disc+ss+fdr)
+        or ora_df.get(disc+fdr)
+        or (ora_ddcode.get(disc+div+fc) if fc else None)
+        or (ora_dcode.get(disc+fc) if fc else None)
+    )
+    if ora_m:
+        extra_matched_ora += 1
+        cons_oct = int(ora_m['cons'])
+        se_oct   = round(ora_m['se_kwh'] / 1000.0, 2)
+        ass_oct  = round(ora_m['ass_rs'] / 1e5, 2)
+        real_oct = round(ora_m['real_rs'] / 1e5, 2)
+        ptw_sub_oct = round(ora_m['ptw_sub_rs'] / 1e5, 2)
+    else:
+        cons_oct = 0; se_oct = 0.0; ass_oct = 0.0; real_oct = 0.0; ptw_sub_oct = 0.0
+        
+    ptw_ass_raw = (
+        ptw_ddsf.get(disc+div+ss+fdr)
+        or ptw_ddf.get(disc+div+fdr)
+        or ptw_dsf.get(disc+ss+fdr)
+        or ptw_df.get(disc+fdr)
+        or (ptw_dcode.get(disc+fc) if fc else 0.0)
+        or 0.0
+    )
+    ptw_ass_oct = round(min(ptw_ass_raw, ass_oct), 2) if ass_oct > 0 else 0.0
+    
+    ie_oct = round(ie_val, 2)
+    ie_arr      = [0.0]*6 + [ie_oct]
+    se_arr      = [0.0]*6 + [se_oct]
+    ass_arr     = [0.0]*6 + [ass_oct]
+    real_arr    = [0.0]*6 + [real_oct]
+    ptw_ass_arr = [0.0]*6 + [ptw_ass_oct]
+    ptw_sub_arr = [0.0]*6 + [ptw_sub_oct]
+    
+    cons_cur = cons_oct
+    flags = 0
+    if ie_oct > 0:
+        ll_pct = ((ie_oct - se_oct) / ie_oct) * 100.0
+        if ll_pct < 0 or ll_pct > 100: flags |= 1
+        if se_oct > ie_oct: flags |= 2
+    else:
+        flags |= 4
+    if cons_cur == 0:
+        flags |= 8
+        
+    new_rows.append([
+        d_idx, z_idx, c_idx, div_idx, ss_idx, out_raw, a_idx, n_idx,
+        ie_arr, se_arr, ass_arr, real_arr,
+        cons_cur, flags, ptw_ass_arr, ptw_sub_arr
+    ])
+
+print(f"   Total Feeders: {len(new_rows)} (26,237 Sep baseline + {added_extra} newly active/added Oct feeders)")
+print(f"   Extra feeders matched in Oracle OCT26: {extra_matched_ora}")
 
 out_data = {'d': N, 'rows': new_rows}
 for folder in ['data', 'frontend/data']:
@@ -305,33 +418,22 @@ for folder in ['data', 'frontend/data']:
         json.dump(out_data, f, separators=(',', ':'))
     print(f"Wrote {target} ({os.path.getsize(target)/1024/1024:.2f} MB)")
 
-# Summary verification
+# Verify Discom distribution
+from collections import Counter
+dc = Counter(N['Discom'][r[0]] for r in new_rows)
+print("\n=== DISCOM FEEDER COUNTS (OCT-26) ===")
+for k, v in sorted(dc.items()):
+    print(f"  {k:<15}: {v:,}")
+
 oct_ie = sum(r[8][6] for r in new_rows) / 1000.0
 oct_se = sum(r[9][6] for r in new_rows) / 1000.0
 oct_ass = sum(r[10][6] for r in new_rows) / 100.0
 oct_real = sum(r[11][6] for r in new_rows) / 100.0
-oct_ptw_a = sum(r[14][6] for r in new_rows) / 100.0
-oct_ptw_s = sum(r[15][6] for r in new_rows) / 100.0
-oct_cons = sum(r[12] for r in new_rows)
-
 prog_ie = sum(sum(r[8]) for r in new_rows) / 1000.0
 prog_se = sum(sum(r[9]) for r in new_rows) / 1000.0
-prog_ass = sum(sum(r[10]) for r in new_rows) / 100.0
-prog_real = sum(sum(r[11]) for r in new_rows) / 100.0
 
-print("\n=== OCT-26 SINGLE MONTH TOTALS (26,237 FEEDERS) ===")
-print(f"  Matched Energy: {matched_ie}/26237 | Matched Oracle: {matched_ora}/26237 | Matched PTW: {matched_ptw}")
-print(f"  Input Energy:  {oct_ie:,.2f} MU")
-print(f"  Sold Energy:   {oct_se:,.2f} MU")
-print(f"  Line Loss:     {100 - (oct_se/oct_ie*100):.2f}%")
-print(f"  Assessment:    Rs {oct_ass:,.2f} Cr (Raw Oracle)")
-print(f"  Realization:   Rs {oct_real:,.2f} Cr")
-print(f"  PTW Ass:       Rs {oct_ptw_a:,.2f} Cr | PTW Sub: Rs {oct_ptw_s:,.2f} Cr")
-print(f"  Billable Cons: {oct_cons:,}")
-
-print("\n=== APR–OCT 2026 PROGRESSIVE TOTALS (7 MONTHS) ===")
-print(f"  Input Energy:  {prog_ie:,.2f} MU")
-print(f"  Sold Energy:   {prog_se:,.2f} MU")
-print(f"  Line Loss:     {100 - (prog_se/prog_ie*100):.2f}%")
-print(f"  Assessment:    Rs {prog_ass:,.2f} Cr")
-print(f"  Realization:   Rs {prog_real:,.2f} Cr")
+print("\n=== OCT-26 SINGLE MONTH TOTALS ===")
+print(f"  Input Energy: {oct_ie:,.2f} MU | Sold Energy: {oct_se:,.2f} MU | Line Loss: {100-(oct_se/oct_ie*100):.2f}%")
+print(f"  Assessment: Rs {oct_ass:,.2f} Cr | Realization: Rs {oct_real:,.2f} Cr")
+print("\n=== APR-OCT PROGRESSIVE TOTALS ===")
+print(f"  Input Energy: {prog_ie:,.2f} MU | Sold Energy: {prog_se:,.2f} MU | Line Loss: {100-(prog_se/prog_ie*100):.2f}%")
