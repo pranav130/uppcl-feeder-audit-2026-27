@@ -85,7 +85,7 @@
 <header>
 <div>
 <h1><button class="btn btn-hamburger" id="sidebarMobileToggle" type="button" title="Toggle Navigation Sidebar">☰</button> ⚡ UPPCL 11KV Feeder PSR Dashboard (Energy Audit)</h1>
-<p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto September 2026</p>
+<p class="sub">Executive Energy Audit, PSR Slab Distribution &amp; Progressive Analytics · Upto October 2026</p>
 </div>
 <div class="header-actions">
 <span class="db-badge" id="dbBadge">• Synced with PostgreSQL (energy_db)</span>
@@ -105,7 +105,7 @@
 <span class="tag-badge ptw-on" id="govtStatusBadge">Govt: DEEMED (100%)</span>
 <span class="tag-badge ptw-off" id="cdfStatusBadge">CDF: INCLUDED</span>
 <span class="tag-badge ptw-off" id="subsidyStatusBadge">Subsidy: EXCLUDED</span>
-<span class="tag-badge">Data Period: April 2026 – September 2026</span>
+<span class="tag-badge">Data Period: April 2026 – October 2026</span>
 <span class="tag-badge">Financial Year: FY 2026-27</span>
 </div>
 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -172,12 +172,14 @@
 <option value="Jul">Jul 2026</option>
 <option value="Aug">Aug 2026</option>
 <option value="Sep">Sep 2026</option>
+<option value="Oct">Oct 2026</option>
 </select>
 </div>
 <div class="f">
 <label for="fMonthTo">To</label>
 <select id="fMonthTo">
-<option selected="" value="Sep">Sep 2026</option>
+<option selected="" value="Oct">Oct 2026</option>
+<option value="Sep">Sep 2026</option>
 <option value="Aug">Aug 2026</option>
 <option value="Jul">Jul 2026</option>
 <option value="Jun">Jun 2026</option>
@@ -300,9 +302,9 @@
 <div class="ph">
 <div>
 <h2>📊 Input vs Billed Energy by Month</h2>
-<p class="hint">Monthly energy comparison (MU) across April–September 2026</p>
+<p class="hint">Monthly energy comparison (MU) across April–October 2026</p>
 </div>
-<span class="pill p-good" style="font-size:11px;">Apr–Sep 2026</span>
+<span class="pill p-good" style="font-size:11px;">Apr–Oct 2026</span>
 </div>
 <div class="chart-box">
 <canvas id="chartMonthlyEnergy"></canvas>
@@ -312,9 +314,9 @@
 <div class="ph">
 <div>
 <h2>📈 Loss Trend by Month</h2>
-<p class="hint">Line Loss % vs AT&amp;C Loss % trend across April–September 2026</p>
+<p class="hint">Line Loss % vs AT&amp;C Loss % trend across April–October 2026</p>
 </div>
-<span class="pill p-warn" style="font-size:11px;">Apr–Sep 2026</span>
+<span class="pill p-warn" style="font-size:11px;">Apr–Oct 2026</span>
 </div>
 <div class="chart-box">
 <canvas id="chartMonthlyLoss"></canvas>
@@ -541,7 +543,7 @@
 <section class="panel">
 <div class="ph">
 <div>
-<h2>📋 Progressive Summary — Discoms &amp; Zones <span id="summaryPeriodBadge" class="pill" style="font-size:11px;vertical-align:middle;margin-left:6px;background:var(--accent-soft);color:var(--accent);font-weight:600;">Progressive Upto Sep-26</span></h2>
+<h2>📋 Progressive Summary — Discoms &amp; Zones <span id="summaryPeriodBadge" class="pill" style="font-size:11px;vertical-align:middle;margin-left:6px;background:var(--accent-soft);color:var(--accent);font-weight:600;">Progressive Upto Oct-26</span></h2>
 <p class="hint" id="summaryTableHint">Feeder count distribution across loss slabs · Click column headers to sort · Click ▶ on Discom row to unfold/fold zones</p>
 </div>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -558,8 +560,8 @@
 <th class="tx" data-col="discom" rowspan="2">Discom <span class="sort-ico">↕</span></th>
 <th class="tx" data-col="zone" rowspan="2">Zone <span class="sort-ico">↕</span></th>
 <th data-col="total_feeders" rowspan="2">Feeders <span class="sort-ico">↕</span></th>
-<th id="thLineLossHeader" colspan="8" style="text-align:center;background:#d9e1f2;color:#1f4e78;border-bottom:1px solid var(--line-2)">LINE LOSS SLAB (PROGRESSIVE UPTO SEP-26)</th>
-<th id="thAtcLossHeader" colspan="8" style="text-align:center;background:#fce4d6;color:#833c0c;border-bottom:1px solid var(--line-2)">AT&amp;C LOSS SLAB (PROGRESSIVE UPTO SEP-26)</th>
+<th id="thLineLossHeader" colspan="8" style="text-align:center;background:#d9e1f2;color:#1f4e78;border-bottom:1px solid var(--line-2)">LINE LOSS SLAB (PROGRESSIVE UPTO OCT-26)</th>
+<th id="thAtcLossHeader" colspan="8" style="text-align:center;background:#fce4d6;color:#833c0c;border-bottom:1px solid var(--line-2)">AT&amp;C LOSS SLAB (PROGRESSIVE UPTO OCT-26)</th>
 <th data-col="ie_zero" rowspan="2">IE 0 <span class="sort-ico">↕</span></th>
 <th data-col="no_consumers_tagged" rowspan="2">No Cons <span class="sort-ico">↕</span></th>
 </tr>
@@ -700,10 +702,10 @@
 <h4>1. Authoritative Data Source</h4>
 <p>Master Reference: <code>11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx</code> (Sheet: <code>AUDIT DATA</code>), updated through September 2026 using Oracle September 2026 billing/realization and master meter energy reports. Covering 26,033 feeders across all 5 DISCOMs (PVVNL, DVVNL, MVVNL, PUVVNL, KESCO) for FY 2026-27.</p>
 <h4>2. Progressive Calculation Scope</h4>
-<p>The reporting period is <strong>April 2026 to September 2026</strong> (6 months progressive). All progressive values are calculated from the sum of monthly numerators and denominators (never from averaging monthly percentages):</p>
+<p>The reporting period is <strong>April 2026 to October 2026</strong> (7 months progressive). All progressive values are calculated from the sum of monthly numerators and denominators (never from averaging monthly percentages):</p>
 <ul>
-<li><code>Progressive Input Energy (MU) = Sum(Apr..Sep IE) / 1000</code></li>
-<li><code>Progressive Sold Energy (MU) = Sum(Apr..Sep SE) / 1000</code></li>
+<li><code>Progressive Input Energy (MU) = Sum(Apr..Oct IE) / 1000</code></li>
+<li><code>Progressive Sold Energy (MU) = Sum(Apr..Oct SE) / 1000</code></li>
 <li><code>Billing Efficiency (BE %) = (Progressive Sold Energy / Progressive Input Energy) × 100</code></li>
 <li><code>Collection Efficiency (CE %) = (Progressive Realization / Progressive Assessment) × 100</code></li>
 <li><code>Line Loss (%) = 100 - BE (%)</code></li>
@@ -730,5 +732,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261030_143500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261030_143500"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261125_140500"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261125_140500"></script></body>
 </html>

@@ -144,7 +144,7 @@ const state = {
   area: '',
   feederType: '',
   monthFrom: 'Apr',
-  monthTo: 'Sep',
+  monthTo: 'Oct',
   search: '',
   tableSearch: '',
   excludeAbnormal: false,
@@ -177,9 +177,9 @@ const state = {
 };
 window.state = state;
 
-const MON_LABELS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-const MON_FULL   = ['April', 'May', 'June', 'July', 'August', 'September'];
-const MON_INDEX  = { Apr: 0, May: 1, Jun: 2, Jul: 3, Aug: 4, Sep: 5 };
+const MON_LABELS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+const MON_FULL   = ['April', 'May', 'June', 'July', 'August', 'September', 'October'];
+const MON_INDEX  = { Apr: 0, May: 1, Jun: 2, Jul: 3, Aug: 4, Sep: 5, Oct: 6 };
 
 const SLAB_LABELS = [
   '0% to 5%', '5% to 10%', '10% to 20%', '20% to 30%',
@@ -545,7 +545,7 @@ function calculateMetrics() {
   const searchUpper = (state.search || '').trim().toUpperCase();
 
   const m0 = MON_INDEX[state.monthFrom] ?? 0;
-  const m1 = MON_INDEX[state.monthTo] ?? 5;
+  const m1 = MON_INDEX[state.monthTo] ?? 6;
   const validM0 = Math.min(m0, m1);
   const validM1 = Math.max(m0, m1);
 
@@ -955,7 +955,7 @@ function renderMonthlyCharts(monthly) {
   if (!monthly || !chartMonthlyEnergy || !chartMonthlyLoss) return;
 
   const m0 = MON_INDEX[state.monthFrom] ?? 0;
-  const m1 = MON_INDEX[state.monthTo] ?? 5;
+  const m1 = MON_INDEX[state.monthTo] ?? 6;
   const validM0 = Math.min(m0, m1);
   const validM1 = Math.max(m0, m1);
 
@@ -1449,19 +1449,19 @@ const BASE_DISCOM_FEEDERS = {
 // Discom-wise monthly billable consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
 // Derived from verified master consumer billing files across all 3,690 division files (Apr-Sep 2026)
 const DISCOM_MONTHLY_BILLABLE_RATIOS = {
-  'PVVNL': [0.98693, 0.99020, 0.99333, 0.99728, 1.0, 1.00277],
-  'DVVNL': [0.98644, 0.99152, 0.99505, 0.99809, 1.0, 1.00259],
-  'PUVNL': [0.98836, 0.99296, 0.99465, 0.99758, 1.0, 1.00273],
-  'MVVNL': [0.98449, 0.98850, 0.99325, 0.99700, 1.0, 1.00328],
-  'KESCO': [0.99022, 0.99391, 0.99640, 0.99831, 1.0, 1.00188],
-  'ALL':   [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285]
+  'PVVNL': [0.98693, 0.99020, 0.99333, 0.99728, 1.0, 1.00277, 1.00499],
+  'DVVNL': [0.98644, 0.99152, 0.99505, 0.99809, 1.0, 1.00259, 1.00489],
+  'PUVNL': [0.98836, 0.99296, 0.99465, 0.99758, 1.0, 1.00273, 1.00269],
+  'MVVNL': [0.98449, 0.98850, 0.99325, 0.99700, 1.0, 1.00328, 1.00709],
+  'KESCO': [0.99022, 0.99391, 0.99640, 0.99831, 1.0, 1.00188, 1.00370],
+  'ALL':   [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00484]
 };
 
-// Monthly billed consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
-const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285];
+// Monthly billed consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep, Oct]
+const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00995];
 
-// Fallback monthly paid consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
-const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0, 1.0];
+// Fallback monthly paid consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep, Oct]
+const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0, 1.0, 0.98643];
 
 function getActiveCategoryData() {
   // Resolve active discom
@@ -1507,7 +1507,7 @@ function getActiveCategoryData() {
   const scaleMu = baseMu > 0 ? (activeMu / baseMu) : 0;
 
   // Monthly snapshot scaling for selected "To" month (Apr=0, May=1, Jun=2, Jul=3, Aug=4, Sep=5)
-  const mTo = (typeof MON_INDEX !== 'undefined' && MON_INDEX[state.monthTo] !== undefined) ? MON_INDEX[state.monthTo] : 5;
+  const mTo = (typeof MON_INDEX !== 'undefined' && MON_INDEX[state.monthTo] !== undefined) ? MON_INDEX[state.monthTo] : 6;
   const billableRatios = DISCOM_MONTHLY_BILLABLE_RATIOS[discKey] || DISCOM_MONTHLY_BILLABLE_RATIOS['ALL'];
   const monthBillableRatio = billableRatios[mTo] ?? 1.0;
   const monthBilledRatio = MONTHLY_BILLED_RATIOS[mTo] ?? 1.0;
@@ -1796,7 +1796,7 @@ function renderProgressiveSummaryTable(groups) {
   if (isSingleMonth) {
     periodTag = `Month: ${state.monthFrom}-26`;
   } else if (isYtd) {
-    periodTag = state.monthTo === 'Sep' ? 'Progressive Upto Sep-26' : `Progressive Apr to ${state.monthTo}-26`;
+    periodTag = state.monthTo === 'Oct' ? 'Progressive Upto Oct-26' : `Progressive Apr to ${state.monthTo}-26`;
   } else {
     periodTag = `Period: ${state.monthFrom} to ${state.monthTo}-26`;
   }
@@ -2306,12 +2306,12 @@ function renderChips() {
   if (state.division) chips.push({ label: `Division: ${state.division}`, clear: () => { state.division = ''; document.getElementById('fDivision').value = ''; } });
   if (state.area) chips.push({ label: `Area: ${state.area}`, clear: () => { state.area = ''; document.getElementById('fArea').value = ''; } });
   if (state.feederType) chips.push({ label: `Type: ${state.feederType}`, clear: () => { state.feederType = ''; document.getElementById('fFeederType').value = ''; } });
-  if (state.monthFrom !== 'Apr' || state.monthTo !== 'Sep') {
+  if (state.monthFrom !== 'Apr' || state.monthTo !== 'Oct') {
     const isSingle = state.monthFrom === state.monthTo;
     const mLabel = isSingle
       ? `📅 Single Month: ${state.monthFrom} 2026`
       : (state.monthFrom === 'Apr' ? `📈 Progressive: Apr to ${state.monthTo} 2026` : `📈 Progressive: ${state.monthFrom} to ${state.monthTo} 2026`);
-    chips.push({ label: mLabel, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Sep'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Sep'; } });
+    chips.push({ label: mLabel, clear: () => { state.monthFrom = 'Apr'; state.monthTo = 'Sep'; document.getElementById('fMonthFrom').value = 'Apr'; document.getElementById('fMonthTo').value = 'Oct'; } });
   }
   if (state.search) chips.push({ label: `Search: "${state.search}"`, clear: () => { state.search = ''; document.getElementById('fSearch').value = ''; } });
   if (state.excludeAbnormal) chips.push({ label: 'Excl: Abnormal Assessment', clear: () => { state.excludeAbnormal = false; document.getElementById('chkAbnormal').checked = false; onFilterChanged(); } });
@@ -2409,7 +2409,7 @@ document.getElementById('fFeederType').addEventListener('change', function() {
 document.getElementById('fMonthFrom').addEventListener('change', function() {
   state.monthFrom = this.value;
   const i0 = MON_INDEX[state.monthFrom] ?? 0;
-  const i1 = MON_INDEX[state.monthTo] ?? 5;
+  const i1 = MON_INDEX[state.monthTo] ?? 6;
   if (i0 > i1) {
     state.monthTo = state.monthFrom;
     document.getElementById('fMonthTo').value = state.monthTo;
@@ -2420,7 +2420,7 @@ document.getElementById('fMonthFrom').addEventListener('change', function() {
 document.getElementById('fMonthTo').addEventListener('change', function() {
   state.monthTo = this.value;
   const i0 = MON_INDEX[state.monthFrom] ?? 0;
-  const i1 = MON_INDEX[state.monthTo] ?? 5;
+  const i1 = MON_INDEX[state.monthTo] ?? 6;
   if (i1 < i0) {
     state.monthFrom = state.monthTo;
     document.getElementById('fMonthFrom').value = state.monthFrom;
@@ -2574,7 +2574,7 @@ function resetFilters() {
   state.area = '';
   state.feederType = '';
   state.monthFrom = 'Apr';
-  state.monthTo = 'Sep';
+  state.monthTo = 'Oct';
   state.search = '';
   state.tableSearch = '';
   state.excludeAbnormal = false;
@@ -2606,7 +2606,7 @@ function resetFilters() {
   document.getElementById('fArea').value = '';
   document.getElementById('fFeederType').value = '';
   document.getElementById('fMonthFrom').value = 'Apr';
-  document.getElementById('fMonthTo').value = 'Sep';
+  document.getElementById('fMonthTo').value = 'Oct';
   document.getElementById('fSearch').value = '';
   document.getElementById('tSearch').value = '';
   // Reset psChart controls
@@ -3164,7 +3164,7 @@ function exportProgressiveSummaryXlsx() {
 
   const isSingleMonth = state.monthFrom === state.monthTo;
   const isYtd = state.monthFrom === 'Apr';
-  const periodTag = isSingleMonth ? `Month: ${state.monthFrom}-26` : (isYtd ? (state.monthTo === 'Sep' ? 'Progressive Upto Sep-26' : `Progressive Apr to ${state.monthTo}-26`) : `Period: ${state.monthFrom} to ${state.monthTo}-26`);
+  const periodTag = isSingleMonth ? `Month: ${state.monthFrom}-26` : (isYtd ? (state.monthTo === 'Oct' ? 'Progressive Upto Oct-26' : `Progressive Apr to ${state.monthTo}-26`) : `Period: ${state.monthFrom} to ${state.monthTo}-26`);
 
   // 2-tier headers matching dashboard
   const headerRow1 = [

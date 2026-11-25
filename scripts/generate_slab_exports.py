@@ -42,7 +42,7 @@ def classify_slab(loss_pct, ie, cons, flags, is_atc=False):
     if ie == 0: return 'IE 0'
     if cons == 0 or (flags & 8): return 'No Cons'
     if loss_pct is None: return 'Abnormal'
-    if loss_pct < 0 or (not is_atc and (flags & 1)) or loss_pct > 100: return 'Abnormal'
+    if loss_pct < 0 or loss_pct > 100: return 'Abnormal'
     if loss_pct < 5: return '0% to 5%'
     if loss_pct < 10: return '5% to 10%'
     if loss_pct < 20: return '10% to 20%'
