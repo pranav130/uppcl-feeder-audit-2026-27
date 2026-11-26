@@ -87,8 +87,8 @@ ABSURD_BY_CODE = {
 SEP_ONLY_FEEDERS = {
     "SUJANPUR25151224417SNP", "PRAVALPRATAP21703332063PLP",
     "KALUAPUR21703324832KLP", "HANSIPUMPCANAL41644320326HPC",
-    "NAGARIYANANDRM21132110205NGN", "RADHARICEUDYOG32452120424RAD",
-    "NADIPAR NEW33232260801NPN", "NEHROLI II12047491214NH2",
+    "NAGARIYANANDRAM21132110205NGN", "RADHARICEUDHYOG32452120424RAD",
+    "NADIPARNEW33232260801NPN", "NEHROLIII12047491214NH2",
     "TATARPURROAD12047491214TAT", "POTABARAHIPTW12047421421PBP",
     "PRAKASHENCLAVE12042210166PHV",
 }
@@ -350,20 +350,17 @@ for r in R:
 
 print(f"\n6. Sep cons lookup built for {len(sep_baseline_cons)} feeder keys")
 
-# ── 7. F7: Build Sep-patch lookup by feeder index (baseline row index) ──
-# Patches: [row_idx_in_offline_dataset, se_mwh, ass_lakh, real_lakh, cons]
-# The offline dataset uses same 26,237 order as our baseline.
-# Map patch[0] (index) to the patch data.
-sep_patch_by_ridx = {}
-for patch in sep_patches:
-    ridx = patch[0]
-    sep_patch_by_ridx[ridx] = {
-        'se_mwh':   round(float(patch[1]), 2),
-        'ass_lakh': round(float(patch[2]), 2),
-        'real_lakh':round(float(patch[3]), 2),
-        'cons':     int(patch[4]),
+# ── 7. F7: Build Sep-patch lookup by Division + Substation + Feeder ──
+sep_patches_by_key = offline.get('sepPatchesByKey', {})
+sep_patch_by_key = {}
+for k, vals in sep_patches_by_key.items():
+    sep_patch_by_key[k] = {
+        'se_mwh':    round(float(vals[0]), 2),
+        'ass_lakh':  round(float(vals[1]), 2),
+        'real_lakh': round(float(vals[2]), 2),
+        'cons':      int(vals[3]),
     }
-print(f"   F7: {len(sep_patch_by_ridx)} Sep-patch entries loaded")
+print(f"   F7: {len(sep_patch_by_key)} Sep-patch entries loaded (keyed by Div+SS+Feeder)")
 
 # ── 8. F3: Track used Oracle groups to avoid double-assignment ────────
 used_oracle_groups = set()
@@ -390,16 +387,16 @@ for ridx, r in enumerate(R):
     if fc: seen_baseline_fcodes.add(fc)
 
     # F4: Check if Sep-only
-    is_sep_only = fdr in SEP_ONLY_FEEDERS or (fc and fc in SEP_ONLY_FEEDERS)
+    is_sep_only = fdr in SEP_ONLY_FEEDERS
     
     # Match Oct IE (only if not Sep-only)
-    ie_oct = 0.0
+    ie_oct = None
     if not is_sep_only:
         for k, mp in [(div+ss+fdr, e_dsf), (div+fdr, e_df), (ss+fdr, e_sf), (fdr, e_f)]:
             if k in mp: ie_oct = mp[k]; matched_ie += 1; break
-        if ie_oct == 0.0 and fc and fc in e_fc:
+        if ie_oct is None and fc and fc in e_fc:
             ie_oct = e_fc[fc]; matched_ie += 1
-    ie_oct = round(ie_oct, 2)
+    ie_oct = round(ie_oct or 0.0, 2)
 
     # Match Oracle OCT (F2: KESCO=div+fdr, others=div+ss+fdr → div+fdr)
     ora_m = None
@@ -442,37 +439,25 @@ for ridx, r in enumerate(R):
     else:
         cons_oct = 0; se_oct = 0.0; ass_oct_raw = 0.0; real_oct = 0.0; ptw_sub_oct = 0.0
 
-    # F6: Check absurd correction for this feeder's Oct assessment
+    # F6: Keep raw assessment in data; absurd correction is applied by JS toggle (Remove Absurd CA (8))
     ass_oct = ass_oct_raw
-    if fc and fc in ABSURD_BY_CODE:
-        m_idx, corrected = ABSURD_BY_CODE[fc]
-        if m_idx == 6:  # Oct
-            ass_oct = corrected  # Store corrected value; raw stored separately
 
     ptw_ass_raw = get_ptw(disc, div, ss, fdr, fc) if not is_sep_only else 0.0
     ptw_ass_oct = round(min(ptw_ass_raw, ass_oct_raw), 2) if ass_oct_raw > 0 else 0.0
 
     ie_arr      = [round(float(x), 2) for x in r[8][:6]] + ([ie_oct] if not is_sep_only else [0.0])
     se_arr      = [round(float(x), 2) for x in r[9][:6]] + ([se_oct] if not is_sep_only else [0.0])
-    ass_arr_raw = [round(float(x), 2) for x in r[10][:6]] + ([ass_oct_raw] if not is_sep_only else [0.0])
+    ass_arr     = [round(float(x), 2) for x in r[10][:6]] + ([ass_oct] if not is_sep_only else [0.0])
     real_arr    = [round(float(x), 2) for x in r[11][:6]] + ([real_oct] if not is_sep_only else [0.0])
     ptw_ass_arr = [round(float(x), 2) for x in r[14][:6]] + ([ptw_ass_oct] if not is_sep_only else [0.0])
     ptw_sub_arr = [round(float(x), 2) for x in r[15][:6]] + ([ptw_sub_oct] if not is_sep_only else [0.0])
-
-    # F6: Apply absurd corrections to any month in ass_arr_raw
-    ass_arr = list(ass_arr_raw)
-    for m_idx in range(7):
-        if fc and fc in ABSURD_BY_CODE:
-            ab_m, ab_val = ABSURD_BY_CODE[fc]
-            if ab_m == m_idx:
-                ass_arr[m_idx] = ab_val
 
     # Sep cons (F5: r[16])
     cons_sep = int(r[12]) if len(r) > 12 else 0  # Sep baseline stores cons in r[12]
 
     # F7: Store patch info (we store sep_patch data in the row for toggling in JS)
-    # patch = [se_mwh, ass_lakh, real_lakh, cons] for month 5 (Sep)
-    sep_patch = sep_patch_by_ridx.get(ridx)
+    # patch = {se_mwh, ass_lakh, real_lakh, cons} for month 5 (Sep)
+    sep_patch = sep_patch_by_key.get(div + '|' + ss + '|' + fdr)
 
     # Flags (use latest active month cons)
     tot_ie = sum(ie_arr); tot_se = sum(se_arr)
@@ -494,11 +479,14 @@ for ridx, r in enumerate(R):
         ptw_ass_arr, ptw_sub_arr,
         cons_sep,       # r[16] F5: Sep billable consumers
     ]
-    # F4: Sep-only feeders
+    # F4: Sep-only feeders get r[17]=None, r[18]=5; normal feeders get None, None if r[19] is needed
     if is_sep_only:
-        out_row.append(None)  # r[17] = None for first_active (N/A for Sep-only)
+        out_row.append(None)  # r[17] = first_active_month (N/A)
         out_row.append(5)     # r[18] = last_active_month = Sep = 5
-    # F7: Sep patch data appended if exists (r[19])
+    elif sep_patch:
+        out_row.append(None)  # r[17]
+        out_row.append(None)  # r[18]
+    # F7: Sep patch data always at r[19]
     if sep_patch:
         out_row.append(sep_patch)  # r[19] = {se_mwh, ass_lakh, real_lakh, cons}
 
@@ -569,13 +557,10 @@ for row, ie_val in oct_outgoing_rows:
     else:
         cons_oct = 0; se_oct = 0.0; ass_oct_raw = 0.0; real_oct = 0.0; ptw_sub_oct = 0.0
 
-    # F6 absurd for new feeders
+    # F6: keep raw assessment in data
     ass_oct = ass_oct_raw
-    if fc and fc in ABSURD_BY_CODE:
-        ab_m, ab_val = ABSURD_BY_CODE[fc]
-        if ab_m == 6: ass_oct = ab_val
 
-    ptw_ass_raw = get_ptw(disc, div, ss, fdr, fc) if not any(x in fdr for x in SEP_ONLY_FEEDERS) else 0.0
+    ptw_ass_raw = get_ptw(disc, div, ss, fdr, fc) if fdr not in SEP_ONLY_FEEDERS else 0.0
     ptw_ass_oct = round(min(ptw_ass_raw, ass_oct_raw), 2) if ass_oct_raw > 0 else 0.0
 
     ie_oct = round(ie_val, 2)

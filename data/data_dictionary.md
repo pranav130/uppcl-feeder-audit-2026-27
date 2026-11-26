@@ -2,32 +2,38 @@
 
 ## 1. Source Information
 - **Source Files**: 
-  - Master Reference: `11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx` (Sheet: `AUDIT DATA`)
-  - September Billing/Realization: `UPDATED_FEEDERWISE_CONSUMPITON_ASSMT_REAL_SEP26.xlsx`
-  - September Energy: `DistributionMasterMeterDataReportExcel_202610141205585478.xls`
+  - Master Reference (Apr–Sep): `11KV total feeders prog audit 2026-27 upto sep-26 F_excluding absurd CA.xlsx` (Sheet: `AUDIT DATA`)
+  - October Billing/Realization: `UPDATED_FEEDERWISE_CONSUMPITON_ASSMT_REAL_OCT26.xlsx` (Sheet: `OCT26`)
+  - October Energy: `DistributionMasterMeterDataReportExcel_202611251124032315.xls` (Col 20: Total Energy Consumption)
+  - October Consumer Master (PTW & Categories): `D:\MASTER DATA\FY 26-27\OCT_2026\<DISCOM>\*_OCT_2026.csv.gz`
 - **Financial Year**: FY 2026-27
-- **Reporting Period**: April 2026 to September 2026 (Progressive 6 Months)
-- **Feeder Records**: 26,033
+- **Reporting Period**: April 2026 to October 2026 (Progressive 7 Months)
+- **Feeder Records**: 26,655 total rows (26,644 active in October + 11 Sep-only feeders)
 
-## 2. Field Definitions & Mapping
+## 2. Field Definitions & Mapping (`feeders.json` / `feeders.js` — 19-field row schema)
 
-| Field Name | Source Column | Data Type | Description |
+| Index / Field Name | Source Column | Data Type | Description |
 | :--- | :--- | :--- | :--- |
-| **Discom** | Col 0 (`Discom`) | String | Distribution Company: DVVNL, MVVNL, PVVNL, PUVVNL, KESCO |
-| **Zone** | Col 1 (`Zone`) | String | Operational Zone (40 zones across UP) |
-| **Circle** | Col 2 (`Circle`) | String | Electricity Distribution Circle (EDC / EUDC, 120 circles) |
-| **Division** | Col 3 (`Division`) | String | Electricity Distribution Division (EDD / EUDD, 392 divisions) |
-| **Substation** | Col 4 (`Substation`) | String | 33/11 KV Substation Name and Identifier (4,711 substations) |
-| **Outgoing Feeder** | Col 5 (`Outgoing Feeder`) | String | 11 KV Outgoing Feeder Name and Code (26,033 feeders) |
-| **Project Area** | Col 6 (`Project Area`) | String | Operational Area category: RURAL, TEHSIL, URBAN |
-| **Feeder Nature** | Col 7 (`Feeder Nature`) | String | Feeders type: AGRICULTURE, MIXED ABOVE 25%, MIXED ABOVE 50%, INDUSTRIAL ABOVE 75%, INDEPENDENT, OTHER, SPARE, SUBSTATION |
-| **Input Energy (Monthly)** | Cols 24–29 (`I.E._Apr'26`..`Sep'26`) | Float | Feeder Input Energy measured in MWh (or '000 kWh). Total MU = Sum / 1,000 |
-| **Sold Energy (Monthly)** | Cols 48–53 (`S.E._Apr'26`..`Sep'26`) | Float | Billed / Sold Energy to consumers in MWh (or '000 kWh). Total MU = Sum / 1,000 |
-| **Assessment (Monthly)** | Cols 60–65 (`Assessment_Apr'26`..`Sep'26`) | Float | Revenue Assessment billed in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
-| **Realization (Monthly)** | Cols 72–77 (`Realization_Apr'26`..`Sep'26`) | Float | Revenue Realization collected in ₹ Lakhs. Total ₹ Cr = Sum / 100 |
-| **PTW Assessment** | Cols 88–93 (`PTW_CA_EX_ SUBS_Apr'26`..`Sep'26`) | Float | Current Assessment for Private Tube Well connections in ₹ Lakhs |
-| **PTW Subsidy** | Cols 100–105 (`PTW_ SUBS _Apr'26`..`Sep'26`) | Float | Government PTW Subsidy in ₹ Lakhs |
-| **Billable Consumers** | Cols 36–41 (`Billable _Apr'26`..`Sep'26`) | Integer | Count of billable consumers connected to the feeder |
+| `r[0]` **Discom** | Col 0 (`Discom`) | Integer idx | Distribution Company: DVVNL, MVVNL, PVVNL, PUVVNL, KESCO |
+| `r[1]` **Zone** | Col 1 (`Zone`) | Integer idx | Operational Zone (40 zones across UP) |
+| `r[2]` **Circle** | Col 2 (`Circle`) | Integer idx | Electricity Distribution Circle (EDC / EUDC, 120 circles) |
+| `r[3]` **Division** | Col 3 (`Division`) | Integer idx | Electricity Distribution Division (EDD / EUDD, 392 divisions) |
+| `r[4]` **Substation** | Col 4 (`Substation`) | Integer idx | 33/11 KV Substation Name and Identifier (4,783 substations) |
+| `r[5]` **Outgoing Feeder** | Col 5 (`Outgoing Feeder`) | String | 11 KV Outgoing Feeder Name and Code |
+| `r[6]` **Project Area** | Col 6 (`Project Area`) | Integer idx | Operational Area category: RURAL, TEHSIL, URBAN |
+| `r[7]` **Feeder Nature** | Col 7 (`Feeder Nature`) | Integer idx | Feeders type: AGRICULTURE, MIXED ABOVE 25%, MIXED ABOVE 50%, INDUSTRIAL ABOVE 75%, INDEPENDENT, OTHER, SPARE, SUBSTATION |
+| `r[8]` **Input Energy (Monthly)** | 7-element array `[Apr..Oct]` | Float[] | Feeder Input Energy in MWh (Total MU = Sum / 1,000) |
+| `r[9]` **Sold Energy (Monthly)** | 7-element array `[Apr..Oct]` | Float[] | Billed / Sold Energy to consumers in MWh (Total MU = Sum / 1,000) |
+| `r[10]` **Assessment (Monthly)** | 7-element array `[Apr..Oct]` | Float[] | Revenue Assessment billed in ₹ Lakhs (Total ₹ Cr = Sum / 100) |
+| `r[11]` **Realization (Monthly)** | 7-element array `[Apr..Oct]` | Float[] | Revenue Realization collected in ₹ Lakhs (Total ₹ Cr = Sum / 100) |
+| `r[12]` **Oct Billable Consumers** | Oracle `BILL_CONS` (Col 7) | Integer | Count of billable consumers in October |
+| `r[13]` **Flags** | Bitmask | Integer | 1=LL Abnormal, 2=SE>IE, 4=IE==0, 8=Cons==0 (legacy) |
+| `r[14]` **PTW Assessment** | 7-element array `[Apr..Oct]` | Float[] | Positive `CA_EX_SUBS` for `PTW_SUBS > 0` in ₹ Lakhs, capped at feeder Assessment |
+| `r[15]` **PTW Subsidy** | 7-element array `[Apr..Oct]` | Float[] | Government PTW Subsidy in ₹ Lakhs |
+| `r[16]` **Sep Billable Consumers** | Sir's Sep Col 45 | Integer | Count of billable consumers for periods ending ≤ Sep (`consFor`) |
+| `r[17]` **First Active Month** | `6` for Oct-new, else `null` | Integer/null | Period-gating lower bound (skips feeder when `mTo < r[17]`) |
+| `r[18]` **Last Active Month** | `5` for 11 Sep-only, else omitted | Integer | Period-gating upper bound (skips feeder when `mTo > r[18]`) |
+| `r[19]` **Sep Oracle Patch** | Optional object `{se_mwh, ass_lakh, real_lakh, cons}` | Object | Present on 760 feeders for the optional `Sep Oracle Re-match (760)` toggle |
 
 ## 3. Mathematical Formulas & KPIs
 

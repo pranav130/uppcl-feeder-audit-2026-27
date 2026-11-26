@@ -345,7 +345,7 @@
 
             function classify(loss) {
                 if (fIE === 0) return 'IE 0';
-                if (cons === 0 || (flags & 8)) return 'No Cons';
+                if (cons === 0) return 'No Cons';
                 if (loss === null) return 'Abnormal';
                 if (loss < 0 || loss > 100) return 'Abnormal';
                 if (loss <= 5) return '0% to 5%';

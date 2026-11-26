@@ -22,6 +22,8 @@ global.state = {
   includePtw: false,
   includeGovt: true,
   includeSubsidy: false,
+  removeAbsurd: true,
+  sepRematch: false,
   leagueManualLevel: null,
   leagueSortCol: 'atcLossValueCr',
   leagueSortDir: -1
@@ -34,9 +36,17 @@ global.MON_FULL   = ['April', 'May', 'June', 'July', 'August', 'September', 'Oct
 global.MON_INDEX  = { Apr: 0, May: 1, Jun: 2, Jul: 3, Aug: 4, Sep: 5, Oct: 6 };
 global.SLAB_LABELS = ['0% to 5%', '5% to 10%', '10% to 20%', '20% to 30%', '30% to 50%', '50% to 70%', 'Above 70%', 'Abnormal', 'IE 0', 'No Cons'];
 
+global.consFor = function(r, mTo) {
+  return (mTo >= 6) ? r[12] : (r[16] !== undefined ? r[16] : r[12]);
+};
+global.ABSURD_CORRECTIONS = {
+  375: {2: 47.47}, 912: {4: 1.41}, 1640: {6: 63.36}, 5964: {6: 2.5},
+  8071: {6: 47.06}, 11643: {6: 16.66}, 11859: {6: 11.12}, 19314: {5: 73.69}
+};
+
 function classifySlab(lossPct, ie, cons, flags, isAtc = false) {
   if (ie === 0) return 'IE 0';
-  if (cons === 0 || (flags & 8)) return 'No Cons';
+  if (cons === 0) return 'No Cons';
   if (lossPct === null || isNaN(lossPct)) return 'Abnormal';
   if (lossPct < 0 || lossPct > 100) return 'Abnormal';
   if (lossPct < 5) return '0% to 5%';
@@ -70,7 +80,7 @@ console.log('calculateMetrics evaluated successfully!');
 
 const res = calculateMetrics();
 console.log('Used feeders count:', res.usedFeeders.length);
-console.assert(res.usedFeeders.length === 26648, `Expected 26648 Oct-active feeders, got ${res.usedFeeders.length}`);
+console.assert(res.usedFeeders.length === 26644, `Expected 26644 Oct-active feeders, got ${res.usedFeeders.length}`);
 
 // Test aggregation for all 5 levels (Progressive Apr-Oct 2026)
 ['discom', 'zone', 'circle', 'division', 'substation'].forEach(level => {
@@ -105,7 +115,7 @@ console.assert(res.usedFeeders.length === 26648, `Expected 26648 Oct-active feed
   }
 
   console.log(`Level: ${level.padEnd(10)} | Groups: ${String(groups.size).padStart(5)} | Feeders: ${totFeeders} | Input MU: ${(totIE/1000).toFixed(2)} | Fdrs>70%: ${tot70}`);
-  console.assert(totFeeders === 26648, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
+  console.assert(totFeeders === 26644, `Feeder total mismatch at level ${level}: got ${totFeeders}`);
 });
 
 // Test Single Month (Oct-Oct) and Verify PSR Slabs
@@ -122,7 +132,7 @@ for (const sg of octRes.progressiveSummary) {
   octFeeders += sg.total_feeders;
 }
 console.log(`Oct-26 Single Month PSR Verify: Input MU=${octRes.kpis.inputEnergyMu.toFixed(2)}, Total Feeders=${octFeeders}`);
-console.assert(octFeeders === 26648, 'Expected 26648 Oct-active feeders in Oct-26 PSR');
+console.assert(octFeeders === 26644, 'Expected 26644 Oct-active feeders in Oct-26 PSR');
 
 // Test Clean Abnormal Filter on Oct-26
 state.excludeAbnormal = true;

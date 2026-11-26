@@ -2,20 +2,21 @@
 
 Comprehensive, high-performance, and interactive 11KV Feeder Progressive Energy Audit Dashboard for **Uttar Pradesh Power Corporation Limited (UPPCL)**.
 
-Based strictly on authoritative data up to August 2026 from:
-`11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx`
+Based strictly on authoritative data up to October 2026:
+- Apr–Sep baseline: `11KV total feeders prog audit 2026-27 upto sep-26 F_excluding absurd CA.xlsx` (26,237 feeders)
+- October 2026: Oracle `OCT26` + MDM Total Energy Consumption + Consumer Master (`OCT_2026`)
 
 ---
 
 ## 1. Project Overview & Scope
-- **Temporal Scope**: FY 2026-27 (April 2026 to August 2026 Progressive).
-- **Feeder Scope**: 26,033 feeders across all 5 DISCOMs:
-  - **PVVNL** (Paschimanchal)
-  - **DVVNL** (Dakshinanchal)
-  - **MVVNL** (Madhyanchal)
-  - **PUVVNL** (Poorvanchal)
-  - **KESCO** (Kanpur Electricity Supply Company)
-- **Hierarchy Coverage**: DISCOM (5) → Zone (40) → Circle (120) → Division (392) → Substation (4,711) → Feeder (26,033).
+- **Temporal Scope**: FY 2026-27 (April 2026 to October 2026 Progressive, 7 Months).
+- **Feeder Scope**: **26,644 active October feeders** (26,655 total rows including 11 Sep-only feeders) across all 5 DISCOMs:
+  - **PVVNL** (Paschimanchal): 8,262
+  - **DVVNL** (Dakshinanchal): 6,227
+  - **MVVNL** (Madhyanchal): 5,890
+  - **PUVVNL** (Poorvanchal): 5,638
+  - **KESCO** (Kanpur Electricity Supply Company): 627
+- **Hierarchy Coverage**: DISCOM (5) → Zone (40) → Circle (120) → Division (392) → Substation (4,783) → Feeder (26,644 active Oct / 26,237 Apr–Sep).
 - **Dual PTW Analytics Engine**: Dynamic recalculation engine for Non-PTW vs Non-PTW + PTW datasets.
 
 ---

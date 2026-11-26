@@ -222,6 +222,14 @@
 <input id="chkIncludeSubsidy" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
 <span>Include Subsidy</span>
 </label>
+<label class="checkbox-group" title="Replace 8 extreme billing-glitch feeder-months with median of other months (on by default)">
+<input id="chkRemoveAbsurd" type="checkbox" checked onchange="window.onFilterOptionChanged(this)"/>
+<span>Remove Absurd CA (8)</span>
+</label>
+<label class="checkbox-group" title="Replace September SE, assessment, realisation and consumers for 760 feeders with Oracle SEP26 values">
+<input id="chkSepRematch" type="checkbox" onchange="window.onFilterOptionChanged(this)"/>
+<span>Sep Oracle Re-match (760)</span>
+</label>
 </div>
 </section>
 <div class="chips" id="chipRow"></div>
@@ -599,7 +607,7 @@
 <div>
 <h2 style="display:flex; align-items:center; gap:8px;">
 <span>🔍 Feeder Drilldown Explorer</span>
-<span class="pill p-good" style="font-size:11px;">26,655 Total Feeders</span>
+<span class="pill p-good" style="font-size:11px;">26,644 Active Feeders (Oct-26)</span>
 </h2>
 <p class="hint">Comprehensive row-level individual feeder audit explorer across all 24 columns, meters, losses, and realization</p>
 </div>
@@ -700,7 +708,7 @@
 </div>
 <div class="modal-body">
 <h4>1. Authoritative Data Source</h4>
-<p>Master Reference: <code>11KV total feeders prog audit 2026-27 upto Aug-26 F_excluding absurd CA.xlsx</code> (Sheet: <code>AUDIT DATA</code>), updated through October 2026 using Oracle October 2026 billing/realization and master meter energy reports. Covering 26,655 active feeders across all 5 DISCOMs (PVVNL, DVVNL, MVVNL, PUVVNL, KESCO) for FY 2026-27.</p>
+<p>Master Reference: <code>11KV total feeders prog audit 2026-27 upto sep-26 F_excluding absurd CA.xlsx</code> (Sheet: <code>AUDIT DATA</code>), updated through October 2026 using Oracle October 2026 billing/realization and master meter energy reports. Covering 26,644 active October feeders (26,655 total rows including 11 Sep-only feeders) across all 5 DISCOMs (PVVNL, DVVNL, MVVNL, PUVVNL, KESCO) for FY 2026-27.</p>
 <h4>2. Progressive Calculation Scope</h4>
 <p>The reporting period is <strong>April 2026 to October 2026</strong> (7 months progressive). All progressive values are calculated from the sum of monthly numerators and denominators (never from averaging monthly percentages):</p>
 <ul>

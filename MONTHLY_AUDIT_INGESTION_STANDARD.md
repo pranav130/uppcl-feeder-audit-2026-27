@@ -62,7 +62,18 @@ The evaluation sequence must strictly follow this order:
 
 ---
 
-## 6. End-to-End Monthly Update Checklist
+## 6. Ingestion & Matching Rules (F1–F7 Standard)
+* **F1 — Input Energy Column Only**: Use MDM `Total Energy Consumption` (Col 20) only; blank or `≤ 0` becomes `0`. Never fall back to `Energy Consumption` (Col 18), because MDM nets out cancelled provisional assessments (`+X` and `-X` → `0`).
+* **F2 — KESCO Oracle Matching**: For `KESCO`, match on `(discom, norm(division), norm(feeder))` summing all matching Oracle rows (do not include `substation` in primary key). For the other 4 Discoms (`PVVNL`, `DVVNL`, `MVVNL`, `PUVNL`), use `(discom, norm(division), norm(substation), norm(feeder))` summed.
+* **F3 — Fallback Matching Without Double Counting**: After primary key, use `(discom, norm(division), norm(feeder))`, then `(discom, feeder_code)` (alphanumeric suffix after last `_`, `≥ 10` chars) only when unique. Track `used_oracle_groups` so no Oracle group is assigned to more than one feeder, and log recovered/unmatched feeders to CSV.
+* **F4 — Period-Scoped Feeder Universe**: Keep historical-only feeders (e.g. 11 Sep-only feeders) in the dataset with `r[18] = last_active_month` and new feeders with `r[17] = first_active_month`. Filter in UI, slab exports, and drilldown using `r[17]` / `r[18]` so each period shows its exact active feeder count.
+* **F5 — Period-Scoped Consumers**: Store prior-month billable consumers (`r[16]`) alongside current-month `r[12]` and resolve via `consFor(r, mTo)`. Never use static `flags & 8` to classify `"No Cons"`; always evaluate `(cons === 0)`.
+* **F6 — Absurd-Bill Correction Toggle**: Flag feeder-months where `assessment > ₹500 lakh` and `assessment × 100 / SE > ₹1,000/kWh`, replacing with the median of the feeder's other non-zero months via a default-ON toggle (`Remove Absurd CA`), while keeping raw Oracle values in `feeders.json`.
+* **F7 — Optional Sep Re-match Toggle**: Keep `Sep Oracle Re-match (760)` toggleable (default OFF) using `r[19]` patches mapped by `Division + Substation + Feeder`.
+
+---
+
+## 7. End-to-End Monthly Update Checklist
 1. **Ingest new month data**: Map month slots (0=Apr, 1=May, 2=Jun, 3=Jul, 4=Aug, 5=Sep, 6=Oct, 7=Nov, etc.).
 2. **Rebuild `data/feeders.json`**: Compact schema with 2-decimal precision.
 3. **Encrypt `data/feeders.js`**: Run `node scripts/encrypt_feeders.js` (AES-256-GCM).
