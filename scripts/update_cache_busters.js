@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const REPO_DIR = path.resolve(__dirname, '..');
-const TIMESTAMP = '20261126_114000';
+const TIMESTAMP = '20261126_130500';
 
 const files = [
   'index.html',
