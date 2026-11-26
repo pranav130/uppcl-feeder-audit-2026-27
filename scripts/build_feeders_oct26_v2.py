@@ -273,9 +273,11 @@ def add_to(mp, key, bc, se_kwh, ass_rs, ptw_rs, real_rs):
 
 for row in ws.iter_rows(min_row=2, values_only=True):
     if row[0] is None: continue
+    fdr_str = str(row[5] or '').strip()
+    if '_' not in fdr_str: continue  # Skip bare-code Oracle rows (no feeder name, same as Sir's sheet)
     disc = norm_oracle_disc(row[0])
-    div  = norm(row[3]); ss = norm(row[4]); fdr = norm(row[5])
-    fc   = fcode(str(row[5] or ''))
+    div  = norm(row[3]); ss = norm(row[4]); fdr = norm(fdr_str)
+    fc   = fcode(fdr_str)
     bc   = clean_int(row[7])
     se   = clean_num(row[10], 2)
     ass  = clean_num(row[14], 2)
@@ -648,3 +650,17 @@ for folder in ['data', 'frontend/data']:
 
 print("\n✅ build_feeders_oct26_v2.py complete!")
 print("Next: run encrypt_feeders.js → generate_slab_exports.py → encrypt_slabs.js")
+
+# Parity assertion against reference unified JSON if available
+REF_UNIFIED = r"D:\MASTER DATA\FY 26-27\Claude outputs\github_parity\feeders_oct26_unified.json"
+if os.path.exists(REF_UNIFIED):
+    ref = json.load(open(REF_UNIFIED, 'r', encoding='utf-8'))
+    ref_map = {(norm(ref['d']['Discom'][rr[0]]), norm(ref['d']['Division'][rr[3]]), norm(ref['d']['SS'][rr[4]]), norm(rr[5])): rr for rr in ref['rows']}
+    mismatches = 0
+    for rr in new_rows:
+        k = (norm(N['Discom'][rr[0]]), norm(N['Division'][rr[3]]), norm(N['SS'][rr[4]]), norm(rr[5]))
+        ex = ref_map.get(k)
+        if not ex or rr[9][6] != ex[9][6] or rr[10][6] != ex[10][6] or rr[11][6] != ex[11][6] or rr[12] != ex[12]:
+            mismatches += 1
+    assert mismatches == 0, f"Oct parity mismatch on {mismatches} rows vs feeders_oct26_unified.json"
+    print("✅ Parity assertion passed: all 26,655 rows match feeders_oct26_unified.json")
