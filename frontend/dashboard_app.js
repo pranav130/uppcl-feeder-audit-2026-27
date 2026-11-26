@@ -470,6 +470,10 @@ function syncCascadeDropdowns() {
 
   for (let i = 0; i < R.length; i++) {
     const r = R[i];
+    // F4: Include only feeders active in the selected To period
+    const _m1f = MON_INDEX[state.monthTo] ?? 6;
+    if (r[17] !== undefined && r[17] !== null && _m1f < r[17]) continue;
+    if (r[18] !== undefined && _m1f > r[18]) continue;
     if (targetDiscomIdx >= 0 && r[0] !== targetDiscomIdx) continue;
     zoneSet.add(r[1]);
 
@@ -529,6 +533,10 @@ function calculateMetrics() {
     if (cAbn) state.excludeAbnormal = cAbn.checked;
     const cBgt = document.getElementById('chkBilledGtInput');
     if (cBgt) state.excludeBilledGtInput = cBgt.checked;
+    const cAbsurd = document.getElementById('chkRemoveAbsurd');
+    if (cAbsurd) state.removeAbsurd = cAbsurd.checked;
+    const cSepR = document.getElementById('chkSepRematch');
+    if (cSepR) state.sepRematch = cSepR.checked;
   }
 
   const targetDiscomIdx = state.discom ? N.Discom.findIndex(d => {
@@ -571,6 +579,12 @@ function calculateMetrics() {
   for (let i = 0; i < R.length; i++) {
     const r = R[i];
 
+    // F4: Skip feeders outside their active period
+    // r[17] = first_active_month (new Oct feeders = 6; Sep-only have r[18]=5)
+    // r[18] = last_active_month (Sep-only feeders = 5)
+    if (r[17] !== undefined && r[17] !== null && validM1 < r[17]) continue;
+    if (r[18] !== undefined && validM1 > r[18]) continue;
+
     // EXACT Matching
     if (targetDiscomIdx >= 0 && r[0] !== targetDiscomIdx) continue;
     if (targetZoneIdx >= 0 && r[1] !== targetZoneIdx) continue;
@@ -598,6 +612,12 @@ function calculateMetrics() {
       let mSE = r[9][m];
       let mAss = r[10][m];
       let mReal = r[11][m];
+      // F7: Sep Oracle Re-match — replace month 5 (Sep) data with patch if toggled on
+      if (state.sepRematch && m === 5 && r[19]) {
+        mSE   = r[19].se_mwh   || mSE;
+        mAss  = r[19].ass_lakh  || mAss;
+        mReal = r[19].real_lakh || mReal;
+      }
       const baseMAss = mAss;
 
       // 1. Exclude CDF bills and outliers (>1500 u/kW and >₹10,000/kW)
@@ -670,10 +690,10 @@ function calculateMetrics() {
       monthly[m].real += mReal;
     }
 
-    const cons = r[12];
+    const cons = (validM1 >= 6) ? r[12] : (r[16] !== undefined ? r[16] : r[12]);
     if (fIE === 0) {
       ieZeroCount++;
-    } else if (cons === 0 || (flags & 8)) {
+    } else if (cons === 0) {
       noConsCount++;
     } else {
       auditedCount++;
@@ -1438,10 +1458,10 @@ window.filterByDiscomName = function(dName) {
 };
 
 const BASE_DISCOM_FEEDERS = {
-  'ALL': 26655,
-  'PVVNL': 8266,
-  'DVVNL': 6231,
-  'PUVNL': 5639,
+  'ALL': 26648,
+  'PVVNL': 8263,
+  'DVVNL': 6228,
+  'PUVNL': 5638,
   'MVVNL': 5892,
   'KESCO': 627
 };
@@ -1449,19 +1469,22 @@ const BASE_DISCOM_FEEDERS = {
 // Discom-wise monthly billable consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep]
 // Derived from verified master consumer billing files across all 3,690 division files (Apr-Sep 2026)
 const DISCOM_MONTHLY_BILLABLE_RATIOS = {
-  'PVVNL': [0.98693, 0.99020, 0.99333, 0.99728, 1.0, 1.00277, 1.00499],
-  'DVVNL': [0.98644, 0.99152, 0.99505, 0.99809, 1.0, 1.00259, 1.00489],
-  'PUVNL': [0.98836, 0.99296, 0.99465, 0.99758, 1.0, 1.00273, 1.00269],
-  'MVVNL': [0.98449, 0.98850, 0.99325, 0.99700, 1.0, 1.00328, 1.00709],
-  'KESCO': [0.99022, 0.99391, 0.99640, 0.99831, 1.0, 1.00188, 1.00370],
-  'ALL':   [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00484]
+  'PVVNL': [0.98693, 0.99020, 0.99333, 0.99728, 1.0, 1.00277, 1.00334],
+  'DVVNL': [0.98644, 0.99152, 0.99505, 0.99809, 1.0, 1.00259, 1.00378],
+  'PUVNL': [0.98836, 0.99296, 0.99465, 0.99758, 1.0, 1.00273, 1.00111],
+  'MVVNL': [0.98449, 0.98850, 0.99325, 0.99700, 1.0, 1.00328, 1.00546],
+  'KESCO': [0.99022, 0.99391, 0.99640, 0.99831, 1.0, 1.00188, 0.99692],
+  'ALL':   [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00321]
 };
 
 // Monthly billed consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep, Oct]
-const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00995];
+const MONTHLY_BILLED_RATIOS = [0.98666, 0.99087, 0.99408, 0.99746, 1.0, 1.00285, 1.00321];
 
 // Fallback monthly paid consumer scaling ratios relative to August baseline [Apr, May, Jun, Jul, Aug, Sep, Oct]
-const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0, 1.0, 0.98643];
+const MONTHLY_PAID_RATIOS = [1.27326, 1.01487, 1.18307, 1.08151, 1.0, 1.0, 1.0];
+
+// F8: October consumer category snapshot from Consumer Master
+const CATEGORY_OCT_COUNTS = {"DVVNL":{"HV1":[1110,1041,1078,277074.08],"HV2":[4142,3935,4734,1811427.05],"HV3":[1,1,3,35100.0],"HV4":[48,42,45,67819.76],"LMV1":[5938043,5905546,5251751,11878239.41],"LMV2":[370711,367264,394111,1604974.53],"LMV3":[21861,21108,3582,79278.71],"LMV4A":[67785,66624,21974,187824.7],"LMV4B":[10374,9968,9742,139386.54],"LMV5":[359072,247544,286082,3648724.05],"LMV6":[45688,44038,53829,926176.06],"LMV7":[16336,14777,12606,256752.8],"LMV8":[7827,4830,7748,197259.25],"LMV9":[8245,7302,10285,66086.66]},"KESCO":{"HV1":[374,348,409,115002.7],"HV2":[689,670,789,254946.42],"HV3":[2,2,2,9000.0],"LMV1":[653939,637896,696853,2362273.53],"LMV2":[99623,96344,125712,546963.86],"LMV3":[522,22,496,31305.82],"LMV4A":[841,684,595,10477.8],"LMV4B":[1205,1089,1179,29062.71],"LMV5":[17,14,20,168.42],"LMV6":[16159,15380,22394,346634.73],"LMV7":[1323,1140,372,65097.73],"LMV9":[6998,2054,4595,42009.18]},"MVVNL":{"HV1":[2330,2246,2313,829471.16],"HV2":[3458,3136,3811,1512196.44],"HV3":[0,0,4,60550.0],"HV4":[16,15,15,32099.16],"LMV1":[9566518,9492524,7992445,16492002.13],"LMV2":[628926,617021,635312,2689292.11],"LMV3":[11989,11149,2502,119819.76],"LMV4A":[94932,92839,27410,268144.33],"LMV4B":[11663,11248,10564,169323.61],"LMV5":[357232,268400,248960,1961780.29],"LMV6":[24649,23501,28977,677004.71],"LMV7":[6859,5711,4719,181923.17],"LMV8":[9657,7181,9559,145703.35],"LMV9":[18677,18076,21336,122522.74]},"PUVNL":{"HV1":[1801,1663,1832,479086.05],"HV2":[2661,2094,3010,1194138.99],"HV3":[0,0,5,40950.0],"HV4":[74,59,64,169849.87],"LMV1":[10194742,10146839,8403157,17444028.66],"LMV2":[726182,712794,774992,2792512.26],"LMV3":[14683,14362,1301,80710.74],"LMV4A":[92780,90294,18195,233345.18],"LMV4B":[13320,12731,12722,142811.93],"LMV5":[425986,370568,326324,1692744.67],"LMV6":[35082,33094,45216,721135.1],"LMV7":[7004,5600,4717,213467.92],"LMV8":[12362,6868,12163,214991.96],"LMV9":[12310,11291,15179,55730.28]},"PVVNL":{"HV1":[3304,3238,3302,1333686.97],"HV2":[7700,7533,8132,4069069.99],"HV3":[8,8,8,161559.9],"HV4":[3,3,3,8945.1],"LMV1":[6881793,6812850,6927898,20599393.43],"LMV2":[669038,658493,695888,3094290.73],"LMV3":[7459,7124,1935,81086.69],"LMV4A":[39869,39204,18890,132861.33],"LMV4B":[11862,11642,11477,155845.84],"LMV5":[539311,526604,475095,3929057.75],"LMV6":[80751,78618,87591,1693263.28],"LMV7":[7139,6549,6043,255631.71],"LMV8":[5071,4815,5120,99194.87],"LMV9":[14181,7665,18532,275162.85]},"ALL":{"HV1":[8919,8536,8934,3034320.96],"HV2":[18650,17368,20476,8841778.89],"HV3":[11,11,22,307159.9],"HV4":[141,119,127,278713.9],"LMV1":[33235035,32995655,29272104,68775937.15],"LMV2":[2494480,2451916,2626015,10728033.49],"LMV3":[56514,53765,9816,392201.73],"LMV4A":[296207,289645,87064,832653.34],"LMV4B":[48424,46678,45684,636430.64],"LMV5":[1681618,1413130,1336481,11232475.18],"LMV6":[202329,194631,238007,4364213.89],"LMV7":[38661,33777,28457,972873.33],"LMV8":[34917,23694,34590,657149.43],"LMV9":[60411,46388,69927,561511.71]}};
 
 function getActiveCategoryData() {
   // Resolve active discom
@@ -1494,8 +1517,8 @@ function getActiveCategoryData() {
   const activeAss = kpis ? (kpis.assessmentCr || 0) : baseAss;
   const activeMu = kpis ? (kpis.soldEnergyMu || 0) : baseMu;
   const activeReal = kpis ? (kpis.realizationCr || 0) : baseReal;
-  const activeFeeders = kpis ? (kpis.totalFeeders || 0) : (BASE_DISCOM_FEEDERS[discKey] || 26655);
-  const baseFeeders = BASE_DISCOM_FEEDERS[discKey] || 26655;
+  const activeFeeders = kpis ? (kpis.totalFeeders || 0) : (BASE_DISCOM_FEEDERS[discKey] || 26648);
+  const baseFeeders = BASE_DISCOM_FEEDERS[discKey] || 26648;
 
   if (kpis && (activeFeeders === 0 || (activeAss === 0 && activeMu === 0))) {
     return { discKey, rows: [] };
@@ -1506,8 +1529,31 @@ function getActiveCategoryData() {
   const scaleAss = baseAss > 0 ? (activeAss / baseAss) : 0;
   const scaleMu = baseMu > 0 ? (activeMu / baseMu) : 0;
 
-  // Monthly snapshot scaling for selected "To" month (Apr=0, May=1, Jun=2, Jul=3, Aug=4, Sep=5)
+  // Monthly snapshot scaling for selected "To" month (Apr=0, May=1, Jun=2, Jul=3, Aug=4, Sep=5, Oct=6)
   const mTo = (typeof MON_INDEX !== 'undefined' && MON_INDEX[state.monthTo] !== undefined) ? MON_INDEX[state.monthTo] : 6;
+
+  // F8: For October, use actual consumer master counts from CATEGORY_OCT_COUNTS
+  if (mTo === 6 && typeof CATEGORY_OCT_COUNTS !== 'undefined' && CATEGORY_OCT_COUNTS[discKey]) {
+    const octCounts = CATEGORY_OCT_COUNTS[discKey];
+    return {
+      discKey,
+      rows: rawRows.map(row => {
+        const octRow = octCounts[row.category];
+        if (!octRow) return { ...row };
+        const scaledAss = scaleAss * (row.assessmentCr || 0);
+        const scaledReal = scaleAss > 0 ? scaledAss * (activeReal / activeAss || 0) : 0;
+        return {
+          ...row,
+          totalCons:    Math.round(octRow[0] * feederRatio),
+          billableCons: Math.round(octRow[1] * feederRatio),
+          billedCons:   Math.round(octRow[2] * feederRatio),
+          totalLoadKw:  Math.round(octRow[3] * feederRatio),
+          assessmentCr: scaledAss,
+          realisedCr:   scaledReal,
+        };
+      })
+    };
+  }
   const billableRatios = DISCOM_MONTHLY_BILLABLE_RATIOS[discKey] || DISCOM_MONTHLY_BILLABLE_RATIOS['ALL'];
   const monthBillableRatio = billableRatios[mTo] ?? 1.0;
   const monthBilledRatio = MONTHLY_BILLED_RATIOS[mTo] ?? 1.0;

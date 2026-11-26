@@ -199,7 +199,7 @@
 <div class="leave-out-bar">
 <span class="leave-out-title">Filters</span>
 <label class="checkbox-group" title="Exclude feeders where assessment &gt; ₹1 Crore AND billing rate &gt; ₹50/kWh">
-<input id="chkAbnormal" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Abnormal Assessment
+<input id="chkAbnormal" data-tooltip="Exclude feeders with Assessment Rate &gt;₹50/kWh" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Abnormal Assessment
       </label>
 <label class="checkbox-group" title="Exclude feeders where Billed Energy exceeds Input Energy (negative line loss)">
 <input id="chkBilledGtInput" type="checkbox" onchange="window.onFilterOptionChanged(this)"/> Exclude Billed &gt; Input
@@ -652,7 +652,7 @@
 <span>C. Include PTW Connections</span>
 <span class="tag-badge" style="font-size: 10px;">Policy &amp; Revenue Credit Filter</span>
 </h4>
-<p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount, total feeders (26,655), Input Energy, Sold Energy, and Line Loss remain strictly <strong>INVARIANT</strong> for the selected period.</p>
+<p><strong>Implemented Rule:</strong> Governs Private Tube Well (agricultural LMV-5) tariff connections under the state policy principle <em>PTW Assessment = PTW Realization</em>. Assessment amount, total feeders (26,644 active / 26,655 total), Input Energy, Sold Energy, and Line Loss remain strictly <strong>INVARIANT</strong> for the selected period.</p>
 <p><strong>Selecting the Checkbox:</strong> Credits PTW assessment amount directly into revenue realization, increasing Collection Efficiency and reducing computed AT&amp;C Loss.</p>
 <p><strong>Deselecting the Checkbox (Default):</strong> Evaluates realization strictly on direct cash collected without agricultural subsidy credit.</p>
 </div>
@@ -732,5 +732,5 @@
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261125_143000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261125_143000"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="data/feeders.js?v=20261126_114000"></script><script src="data/xlsx.full.min.js"></script><script src="dashboard_app.js?v=20261126_114000"></script></body>
 </html>
