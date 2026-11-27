@@ -22,12 +22,6 @@ function updateAuditBadges() {
     }
   }
 
-else {
-      cdfBadge.textContent = 'CDF: INCLUDED';
-      cdfBadge.className = 'tag-badge ptw-off';
-    }
-  }
-
   const subBadge = document.getElementById('subsidyStatusBadge');
   if (subBadge) {
     if (state.includeSubsidy) {
@@ -415,10 +409,6 @@ async function loadDataset() {
 
     if (!window.__FEEDERS_RAW && window.__ENCRYPTED_FEEDERS) {
       window.__FEEDERS_RAW = await decryptVaultPayload(cryptoKey, window.__ENCRYPTED_FEEDERS);
-    }
-
-    if (typeof __ENCRYPTED_CATEGORY_DATA !== 'undefined' && Object.keys(CATEGORY_DATA_BY_DISCOM).length === 0) {
-      CATEGORY_DATA_BY_DISCOM = await decryptVaultPayload(cryptoKey, __ENCRYPTED_CATEGORY_DATA);
     }
 
     if (window.__FEEDERS_RAW) {
