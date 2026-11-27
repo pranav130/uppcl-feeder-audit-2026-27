@@ -233,7 +233,7 @@
 <div class="page-buttons" id="pageButtons"></div>
 </div>
 </div>
-<script src="data/feeders.js?v=20261126_130500"></script>
+<script src="data/feeders.js?v=20261127_125000"></script>
 <script>
         let _cachedCryptoKey = null;
 
@@ -335,7 +335,7 @@
             const fSE = found[9].reduce((a, b) => a + b, 0);
             const fAss = found[10].reduce((a, b) => a + b, 0);
             const fReal = found[11].reduce((a, b) => a + b, 0);
-            const cons = found[12];
+            const cons = Array.isArray(found[16]) ? (found[16][found[16].length - 1] || 0) : found[12];
             const flags = found[13];
 
             const be = fIE > 0 ? (fSE / fIE) * 100 : null;
@@ -348,12 +348,12 @@
                 if (cons === 0) return 'No Cons';
                 if (loss === null) return 'Abnormal';
                 if (loss < 0 || loss > 100) return 'Abnormal';
-                if (loss <= 5) return '0% to 5%';
-                if (loss <= 10) return '5% to 10%';
-                if (loss <= 20) return '10% to 20%';
-                if (loss <= 30) return '20% to 30%';
-                if (loss <= 50) return '30% to 50%';
-                if (loss <= 70) return '50% to 70%';
+                if (loss < 5) return '0% to 5%';
+                if (loss < 10) return '5% to 10%';
+                if (loss < 20) return '10% to 20%';
+                if (loss < 30) return '20% to 30%';
+                if (loss < 50) return '30% to 50%';
+                if (loss < 70) return '50% to 70%';
                 return 'Above 70%';
             }
 
@@ -638,7 +638,7 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = `<tr><td colspan="24" style="text-align:center; padding:30px; color:#64748b;">Decrypting &amp; loading ${slabParam} dataset (${lossType === 'atc_loss' ? 'AT&C Loss' : 'Line Loss'})...</td></tr>`;
 
-            const scriptPath = `slab_data/${lossType}_${slug}.js?v=20261126_130500`;
+            const scriptPath = `slab_data/${lossType}_${slug}.js?v=20261127_125000`;
             const s = document.createElement('script');
             s.src = scriptPath;
             s.onload = async function() {

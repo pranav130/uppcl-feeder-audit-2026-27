@@ -58,20 +58,11 @@ def classify_slab(loss_pct, ie, cons, flags, is_atc=False):
 # 16: LineSlab, 17: ATCSlab, 18: ABR, 19: Consumers, 20: ThruRate, 21: ATCLossValueCr, 22: LossPerUnit, 23: IsPTW
 drilldown_rows = []
 
-ABSURD_CORRECTIONS = {
-    375: (2, 47.47),
-    912: (4, 1.41),
-    1640: (6, 63.36),
-    5964: (6, 2.5),
-    8071: (6, 47.06),
-    11643: (6, 16.66),
-    11859: (6, 11.12),
-    19314: (5, 73.69),
-}
-
 for ridx, r in enumerate(R):
-    # F4: Skip feeders not active in Oct (mTo = 6)
-    if len(r) > 18 and r[18] is not None and 6 > r[18]:
+    # Universe rule: skip feeders not active in Oct (mTo = 6)
+    if len(r) > 17 and isinstance(r[17], int) and 6 < r[17]:
+        continue
+    if len(r) > 18 and isinstance(r[18], int) and 6 > r[18]:
         continue
     discom = N['Discom'][r[0]]
     zone = N['Zone'][r[1]]
@@ -84,14 +75,9 @@ for ridx, r in enumerate(R):
 
     f_ie = sum(r[8])
     f_se = sum(r[9])
-    ass_list = list(r[10])
-    if ridx in ABSURD_CORRECTIONS:
-        ab_m, ab_val = ABSURD_CORRECTIONS[ridx]
-        if len(ass_list) > ab_m:
-            ass_list[ab_m] = ab_val
-    f_ass = sum(ass_list)
+    f_ass = sum(r[10])
     f_real = sum(r[11])
-    cons = r[12]
+    cons = (r[16][6] or 0) if (len(r) > 16 and isinstance(r[16], list)) else r[12]
     flags = r[13]
     ptw_ass = sum(r[14])
     is_ptw = 1 if (flags & 16) else 0
